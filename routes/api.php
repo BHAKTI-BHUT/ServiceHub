@@ -15,4 +15,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    // Booking Requests
+    Route::get('/booking-requests', [App\Http\Controllers\Api\BookingRequestController::class, 'index']);
+    Route::post('/booking-requests', [App\Http\Controllers\Api\BookingRequestController::class, 'store']);
+
+    // Bookings
+    Route::get('/bookings', [App\Http\Controllers\Api\BookingController::class, 'index']);
+    Route::get('/bookings/{id}', [App\Http\Controllers\Api\BookingController::class, 'show']);
+    Route::post('/bookings/{id}/cancel', [App\Http\Controllers\Api\BookingController::class, 'cancel']);
 });

@@ -10,6 +10,7 @@ use App\Http\Requests\Api\VerifyOtpRequest;
 use App\Repositories\UserRepository;
 use App\Services\OtpService;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -55,6 +56,10 @@ class AuthController extends Controller
         $data = $request->validated();
         
         $user = $this->userRepository->create($data);
+
+        // Assign default 'User' role on app registration
+        $role = Role::firstOrCreate(['name' => 'User', 'guard_name' => 'web']);
+        $user->assignRole($role);
 
         try {
             $this->otpService->generateOtp($user->mobile);

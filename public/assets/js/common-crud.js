@@ -239,42 +239,43 @@ $(document).ready(function () {
                 }
 
                 if ($content && $content.length > 0) {
-                    // Find the form inside the content
+                    // Check if there's a form
                     var $form = $content.is('form') ? $content : $content.find('form').first();
+
+                    // Extract scripts before inserting HTML (jQuery strips them)
+                    var scripts = [];
+                    $content.find('script').each(function () {
+                        scripts.push($(this).html());
+                        $(this).remove();
+                    });
+
+                    $('#commonDrawerBody').html($content);
 
                     if ($form.length > 0) {
                         var formId = $form.attr('id') || 'drawerForm';
                         $form.attr('id', formId);
-
-                        // Extract scripts before inserting HTML (jQuery strips them)
-                        var scripts = [];
-                        $content.find('script').each(function () {
-                            scripts.push($(this).html());
-                            $(this).remove();
-                        });
-
-                        $('#commonDrawerBody').html($content);
                         $('#commonDrawerFooter').removeClass('d-none');
                         $('#drawerSubmitBtn').attr('form', formId);
-
-                        // Re-initialize Select2 inside drawer
-                        var $select2 = $('#commonDrawer .select2');
-                        if ($select2.length) {
-                            $select2.select2({
-                                dropdownParent: $('#commonDrawer'),
-                                width: '100%'
-                            });
-                        }
-
-                        // Execute embedded scripts
-                        scripts.forEach(function (scriptContent) {
-                            try { $.globalEval(scriptContent); } catch (e) { console.warn('Drawer script error:', e); }
-                        });
                     } else {
-                        $('#commonDrawerBody').html('<div class="alert alert-warning m-0">Could not find a form in the loaded content.</div>');
+                        // It's just a view, hide footer
+                        $('#commonDrawerFooter').addClass('d-none');
                     }
+
+                    // Re-initialize Select2 inside drawer
+                    var $select2 = $('#commonDrawer .select2');
+                    if ($select2.length) {
+                        $select2.select2({
+                            dropdownParent: $('#commonDrawer'),
+                            width: '100%'
+                        });
+                    }
+
+                    // Execute embedded scripts
+                    scripts.forEach(function (scriptContent) {
+                        try { $.globalEval(scriptContent); } catch (e) { console.warn('Drawer script error:', e); }
+                    });
                 } else {
-                    $('#commonDrawerBody').html('<div class="alert alert-warning m-0">Could not load form content.</div>');
+                    $('#commonDrawerBody').html('<div class="alert alert-warning m-0">Could not load content.</div>');
                 }
             },
             error: function () {

@@ -14,11 +14,12 @@
     @php
         $buttonTitle = trim(View::yieldContent('buttonTitle'));
         $buttonLink = trim(View::yieldContent('buttonLink'));
+        $isDrawer = View::hasSection('isDrawer') ? trim(View::yieldContent('isDrawer')) : 'true';
     @endphp
 
     @if ($buttonTitle !== '' && $buttonLink !== '')
         <div class="d-flex my-xl-auto align-items-center flex-shrink-0">
-            <a href="{{ $buttonLink }}" class="btn btn-sm btn-primary" data-drawer="true">
+            <a href="{{ $buttonLink }}" class="btn btn-sm btn-primary" @if($isDrawer === 'true') data-drawer="true" @endif>
                 {!! $buttonTitle !!}
             </a>
         </div>

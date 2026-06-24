@@ -1,6 +1,6 @@
 @extends('partials.Layouts.master3')
 
-@section('title', 'Dashboard | Herozi - Design & Developed by ❤️SparkBizTech.')
+@section('title', 'Dashboard | Herozi - Design & Developed by Bhakti.')
 @section('sub-title', 'Dashboard Details')
 @section('pagetitle', 'Dashboard')
 @section('buttonTitle', 'Share')
@@ -14,78 +14,90 @@
 @section('content')
 
     <div class="row">
-        <div class="col-lg-4">
+        <!-- Customers Card -->
+        <div class="col-lg-3 col-md-6">
             <div class="card card-hover overflow-hidden">
                 <div class="card-body hstack gap-2">
-                    <div class="avatar avatar-item rounded-2">
-                        <i class="ri-group-line"></i>
+                    <div class="avatar avatar-item rounded-2 bg-primary bg-opacity-10 text-primary">
+                        <i class="ri-user-star-line fs-20"></i>
                     </div>
                     <div>
-                        <span class="mb-2 fs-12 text-muted">Number of Students</span>
-                        <h5 class="fw-medium mb-1">1,200</h5>
+                        <span class="mb-2 fs-12 text-muted">Total Customers</span>
+                        <h5 class="fw-medium mb-1">{{ number_format($stats['total_customers']) }}</h5>
                     </div>
                 </div>
                 <div class="card-body bg-light py-2 bg-opacity-40 hstack justify-content-between gap-3">
-                    <div class="hstack gap-3">
-                        <h6 class="mb-0 fw-semibold">Active Students:</h6>
-                        <p class="fs-12 text-muted mb-0">1,000</p>
-                    </div>
-                    <div class="vr h-30px align-self-center bg-light"></div>
-                    <div class="hstack gap-3">
-                        <h6 class="mb-0 fw-semibold">New Students:</h6>
-                        <p class="fs-12 text-muted mb-0">200</p>
+                    <div class="hstack gap-2">
+                        <h6 class="mb-0 fw-semibold fs-12">Active:</h6>
+                        <p class="fs-12 text-muted mb-0">{{ number_format($stats['active_customers']) }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Total Courses Card -->
-        <div class="col-lg-4">
+        <!-- Bookings Card -->
+        <div class="col-lg-3 col-md-6">
             <div class="card card-hover overflow-hidden">
                 <div class="card-body hstack gap-2">
-                    <div class="avatar avatar-item rounded-2">
-                        <i class="ri-book-line"></i>
+                    <div class="avatar avatar-item rounded-2 bg-success bg-opacity-10 text-success">
+                        <i class="ri-calendar-todo-line fs-20"></i>
                     </div>
                     <div>
-                        <span class="mb-2 fs-12 text-muted">Total Courses</span>
-                        <h5 class="fw-medium mb-1">30</h5>
+                        <span class="mb-2 fs-12 text-muted">Total Bookings</span>
+                        <h5 class="fw-medium mb-1">{{ number_format($stats['total_bookings']) }}</h5>
                     </div>
                 </div>
                 <div class="card-body bg-light py-2 bg-opacity-40 hstack justify-content-between gap-3">
-                    <div class="hstack gap-3">
-                        <h6 class="mb-0 fw-semibold">Active Courses:</h6>
-                        <p class="fs-12 text-muted mb-0">25</p>
+                    <div class="hstack gap-2">
+                        <h6 class="mb-0 fw-semibold fs-12">Completed:</h6>
+                        <p class="fs-12 text-success mb-0">{{ number_format($stats['completed_bookings']) }}</p>
                     </div>
                     <div class="vr h-30px align-self-center bg-light"></div>
-                    <div class="hstack gap-3">
-                        <h6 class="mb-0 fw-semibold">Archived:</h6>
-                        <p class="fs-12 text-muted mb-0">5</p>
+                    <div class="hstack gap-2">
+                        <h6 class="mb-0 fw-semibold fs-12">Pending:</h6>
+                        <p class="fs-12 text-warning mb-0">{{ number_format($stats['pending_bookings']) }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Instructor Performance Card -->
-        <div class="col-lg-4">
+        <!-- Revenue Card -->
+        <div class="col-lg-3 col-md-6">
             <div class="card card-hover overflow-hidden">
                 <div class="card-body hstack gap-2">
-                    <div class="avatar avatar-item rounded-2">
-                        <i class="ri-user-star-line"></i>
+                    <div class="avatar avatar-item rounded-2 bg-info bg-opacity-10 text-info">
+                        <i class="ri-money-dollar-circle-line fs-20"></i>
                     </div>
                     <div>
-                        <span class="mb-2 fs-12 text-muted">Instructor Performance</span>
-                        <h5 class="fw-medium mb-1">John Doe - 4.8/5</h5>
+                        <span class="mb-2 fs-12 text-muted">Total Revenue</span>
+                        <h5 class="fw-medium mb-1">₹{{ number_format($stats['total_revenue'], 2) }}</h5>
                     </div>
                 </div>
                 <div class="card-body bg-light py-2 bg-opacity-40 hstack justify-content-between gap-3">
-                    <div class="hstack gap-3">
-                        <h6 class="mb-0 fw-semibold">Completion Rate:</h6>
-                        <p class="fs-12 text-muted mb-0">85%</p>
+                    <div class="hstack gap-2">
+                        <h6 class="mb-0 fw-semibold fs-12">Pending:</h6>
+                        <p class="fs-12 text-muted mb-0">₹{{ number_format($stats['pending_revenue'], 2) }}</p>
                     </div>
-                    <div class="vr h-30px align-self-center bg-light"></div>
-                    <div class="hstack gap-3">
-                        <h6 class="mb-0 fw-semibold">New Reviews:</h6>
-                        <p class="fs-12 text-muted mb-0">15</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicles Card -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card card-hover overflow-hidden">
+                <div class="card-body hstack gap-2">
+                    <div class="avatar avatar-item rounded-2 bg-warning bg-opacity-10 text-warning">
+                        <i class="ri-truck-line fs-20"></i>
+                    </div>
+                    <div>
+                        <span class="mb-2 fs-12 text-muted">Total Vehicles</span>
+                        <h5 class="fw-medium mb-1">{{ number_format($stats['total_vehicles']) }}</h5>
+                    </div>
+                </div>
+                <div class="card-body bg-light py-2 bg-opacity-40 hstack justify-content-between gap-3">
+                    <div class="hstack gap-2">
+                        <h6 class="mb-0 fw-semibold fs-12">Active:</h6>
+                        <p class="fs-12 text-muted mb-0">{{ number_format($stats['active_vehicles']) }}</p>
                     </div>
                 </div>
             </div>

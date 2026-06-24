@@ -26,14 +26,14 @@ class User extends Authenticatable
         'mobile',
         'password',
         'image',
-        // 'phone',
-        // 'date_of_birth',
-        // 'gender',
-        // 'address',
-        // 'city',
-        // 'state',
-        // 'country',
-        // 'postal_code',
+        'phone',
+        'date_of_birth',
+        'gender',
+        'address',
+        'city',
+        'state',
+        'country',
+        'postal_code',
         'status',
     ];
 
@@ -59,5 +59,21 @@ class User extends Authenticatable
             'password' => 'hashed',
             'date_of_birth' => 'date',
         ];
+    }
+
+    /**
+     * Get all booking requests for this user.
+     */
+    public function bookingRequests()
+    {
+        return $this->hasMany(BookingRequest::class, 'customer_id');
+    }
+
+    /**
+     * Get all bookings for this user.
+     */
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'customer_id');
     }
 }

@@ -1,0 +1,474 @@
+# 📘 ServiceHub Admin Panel — User Manual
+
+> **Application:** ServiceHub (Bhanderi Packers & Movers)  
+> **Type:** Laravel Web Admin Panel  
+> **Business:** Packers & Movers Shifting Service — Household/Office shifting booking, auto-pricing, revenue & customer management
+
+---
+
+## 📋 Sidebar Navigation Structure
+
+```
+├── 🏠 Main
+│   └── Dashboard
+│
+├── 📦 Service Management
+│   ├── Customers
+│   ├── Bookings ▼
+│   │   ├── Booking Requests
+│   │   └── Booking Manage
+│   └── Revenue
+│
+├── ⚙️ Master Management
+│   └── Master Settings ▼
+│       ├── Vehicles
+│       ├── Categories
+│       ├── Item Master
+│       └── Add-On Services
+│
+├── 📊 Reports & Feedback
+│   ├── Feedback & Ratings
+│   └── Reports
+│
+├── 👥 Applications
+│   └── User Management ▼
+│       ├── Users
+│       └── Roles & Permissions
+│
+└── 🔧 Settings
+    └── System Settings ▼
+        ├── General Settings
+        ├── Pricing Settings
+        └── Profile Settings
+```
+
+---
+
+## 1. 🏠 Dashboard
+
+| Detail | Info |
+|---|---|
+| **Route** | `/dashboard` |
+| **Controller** | [DashboardController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/DashboardController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Admin जब login करे तो उसे **एक नज़र में पूरे business की situation** पता चल जाए — कितनी bookings हैं, कितनी pending हैं, कितना revenue आया है। बार-बार अलग-अलग pages खोलने की ज़रूरत ना पड़े। **ये पूरे system का control room है।**
+
+### क्या काम करता है:
+- Admin panel का **main landing page** — login के बाद सबसे पहले यही खुलता है
+- Total Bookings, Pending, Confirmed, Completed, Cancelled की **quick summary cards**
+- Business की overall health **एक screen पर** दिखाता है
+
+---
+
+## 2. 👤 Customers
+
+| Detail | Info |
+|---|---|
+| **Route** | `/customer` |
+| **Controller** | [CustomerController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/CustomerController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Packers & Movers business में **customer ही सबकुछ है।** जब कोई customer mobile app से register करता है या admin manually add करता है, तो उसकी **पूरी profile और booking history** एक जगह दिखनी चाहिए। अगर customer call करे तो admin तुरंत उसका record निकाल सके, past bookings देख सके, details update कर सके। **ये customer relationship management (CRM) का काम करता है।**
+
+### क्या काम करता है:
+- सभी customers की list DataTable में (जिनका role "User" है)
+- Customer की **profile photo, name, email, mobile, city, status** show होता है
+- **View** → Customer की पूरी booking history देखें
+- **Edit** → Name, email, mobile, city, address, password, profile image update करें (Drawer)
+- **Delete** → Customer permanently delete करें
+- **Status Badge** → Active 🟢 / Inactive 🔴
+
+---
+
+## 3. 📩 Booking Requests
+
+| Detail | Info |
+|---|---|
+| **Route** | `/booking-request` |
+| **Controller** | [BookingRequestController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/BookingRequestController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Customer जब **mobile app से shifting request** भेजता है, तो वो सीधा booking नहीं बनती — पहले **admin के पास approval के लिए आती है।** Admin request check करता है (location, date, items), फिर decide करता है कि approve करना है या reject। **ये एक filter/gateway है जो ensure करता है कि सिर्फ valid requests ही booking बनें।** Fake या invalid requests यहीं रुक जाती हैं।
+
+### क्या काम करता है:
+- Mobile App से आई customer requests यहाँ **pending status** में दिखती हैं
+- **View (👁)** → Request details drawer में — customer, pickup/drop location, date, estimated amount
+- **Approve (✅)** → Approve करने पर **automatic Booking create** हो जाती है (confirmed status)
+- **Reject (❌)** → Invalid/fake request reject कर दें
+- **Status:** Pending 🟡 → Approved 🟢 / Rejected 🔴
+
+---
+
+## 4. 📋 Booking Management
+
+| Detail | Info |
+|---|---|
+| **Route** | `/booking` |
+| **Controller** | [BookingController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/BookingController.php) |
+| **Pricing Logic** | [PricingEngine.php](file:///d:/ServiceHub/app/Services/PricingEngine.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> **ये पूरे system का सबसे important module है — इसी से business चलता है।** हर shifting order एक "Booking" है। Admin यहाँ से manually booking create कर सकता है (जब customer phone पर call करके booking करवाता है), existing bookings edit कर सकता है, status change कर सकता है। **PricingEngine** automatically items, distance, add-ons, surcharges के basis पर price calculate करता है ताकि manual calculation की ग़लतियाँ न हों। Booking का पूरा lifecycle (pending → confirmed → in_progress → completed/cancelled) यहीं से manage होता है।
+
+### क्या काम करता है:
+
+| Action | Description |
+|---|---|
+| **List** | सभी bookings DataTable में — booking number, customer, mobile, date/time, amount, status |
+| **Create (➕)** | New booking — customer search (AJAX), pickup/drop location, items select, add-ons, floor, date/time |
+| **View (👁)** | Full detail — customer info, locations, items, add-ons, pricing breakdown, vehicle, category |
+| **Edit (✏️)** | Update booking — items/addons बदलने पर **price auto re-calculate** |
+| **Cancel (❌)** | Booking cancel (status → cancelled) |
+| **Complete (✅)** | Booking complete mark (status → completed) |
+
+### Booking Statuses:
+| Status | Badge | Meaning |
+|---|---|---|
+| `pending` | 🟡 | Booking बनी है, confirm नहीं हुई |
+| `confirmed` | 🔵 | Booking confirm हो गई |
+| `in_progress` | 🔵 | Shifting जारी है |
+| `completed` | 🟢 | Shifting पूरी हो गई |
+| `cancelled` | 🔴 | Booking cancel हो गई |
+
+### Auto Pricing (PricingEngine) कैसे काम करता है:
+```
+Step 1 → Items का Volume Score calculate (item score × quantity)
+Step 2 → Score > 310 → "Survey Required" (बहुत बड़ा shifting, manual quote ज़रूरी)
+Step 3 → Volume Score से auto Category & Vehicle select
+Step 4 → Distance charges — Haversine formula से km, first 5 km free, बाकी ₹20/km
+Step 5 → Add-On charges जोड़ो
+Step 6 → Floor charges (₹150/floor — बिना lift के)
+Step 7 → Weekend surcharge (+10%) & Month-end surcharge (+15%)
+Step 8 → Grand Total = Base + Distance + Addons + Floor + Weekend + Month-end
+```
+
+### Payment Breakdown:
+| Item | Calculation |
+|---|---|
+| Advance Amount | Total × 20% |
+| Remaining Amount | Total − Advance |
+| Vendor Commission | Total × 15% |
+| Vendor Settlement | Total − Commission |
+
+---
+
+## 5. 💰 Revenue
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/revenue` |
+| **Controller** | [RevenueController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/RevenueController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Business में **पैसों का हिसाब-किताब** सबसे ज़रूरी है। Admin को जानना है कि कुल कितना revenue आया, कितना advance collect हुआ, कितना remaining है, और कितना अभी pending है। **बिना इस module के admin को manually Excel में calculation करनी पड़ती — ये सब automatic करता है।** ये module accountant/owner के लिए है जो finance track करता है।
+
+### क्या काम करता है:
+| Feature | Description |
+|---|---|
+| **Total Revenue Card** | कुल revenue (fully paid bookings) |
+| **Advance Collected** | जितना advance amount collect हुआ |
+| **Remaining Collected** | Remaining amount जो collect हुआ |
+| **Pending Revenue** | अभी कितना पैसा आना बाकी है |
+| **DataTable** | Booking-wise payment detail — amount, advance, remaining, payment status |
+| **Payment Status** | Fully Paid 🟢, Advance Paid 🟡, Unpaid 🔴 |
+
+---
+
+## 6. 🚛 Vehicles (Master)
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/vehicles` |
+| **Controller** | [VehicleController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/VehicleController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Packers & Movers में **अलग-अलग size की shifting के लिए अलग vehicle चाहिए** — 1 BHK के लिए Mini Truck काफी है, लेकिन 3 BHK के लिए Tata 407 या Container चाहिए। ये module define करता है कि **कौन-कौनसी vehicles available हैं और उनकी capacity कितनी है।** PricingEngine booking बनाते वक़्त items के volume score के हिसाब से **automatically सही vehicle assign** करता है। **इससे manual vehicle selection की ग़लती खत्म हो जाती है।**
+
+### Fields:
+| Field | Description |
+|---|---|
+| `vehicle_name` | Vehicle का नाम (e.g., "Mini Truck", "Tata 407", "14ft Container") |
+| `vehicle_capacity_score` | Vehicle कितना load ले सकती है (integer score) |
+| `status` | Active / Inactive |
+
+### Actions: Create, Edit (Drawer), Delete
+
+---
+
+## 7. 📂 Categories (Master)
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/categories` |
+| **Controller** | [CategoryController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/CategoryController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Shifting service में **हर order का size अलग होता है** — कोई 1 BHK shift कर रहा है, कोई 3 BHK, कोई office। हर size के लिए **अलग base fare और अलग vehicle** चाहिए। Category module इसी mapping को define करता है — **"अगर customer के items का total volume score 50-100 के बीच है, तो ये 2 BHK category है, base fare ₹3000 होगा, और Tata 407 vehicle लगेगी।"** PricingEngine इसी data से auto-decide करता है। **बिना categories के system को पता ही नहीं चलेगा कि कौनसा shifting order कितने का होगा।**
+
+### Fields:
+| Field | Description |
+|---|---|
+| `category_name` | Category नाम (e.g., "1 BHK", "2 BHK", "3 BHK", "Office Small") |
+| `vehicle_id` | कौनसी vehicle use होगी (active vehicles से dropdown) |
+| `min_score` | Minimum volume score (range start) |
+| `max_score` | Maximum volume score (range end) |
+| `base_fare` | इस category का base fare (₹) |
+| `status` | Active / Inactive |
+
+### Actions: Create, Edit (Drawer), Delete
+
+---
+
+## 8. 📦 Item Master
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/items` |
+| **Controller** | [ItemController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/ItemController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Shifting में **customer के पास कौन-कौनसे items हैं, उसी से तय होता है कि कितनी बड़ी गाड़ी चाहिए और rate क्या होगा।** Bed, Sofa, Fridge — ये सब अलग-अलग space लेते हैं। हर item को एक **volume_score** मिलता है (1=छोटा, 3=medium, 5=बड़ा)। Booking बनाते वक़्त जब admin items select करता है, तो **सभी items का total volume score calculate होता है** और उसी से category, vehicle, और price auto-decide होते हैं। **ये module pricing engine का foundation है — items के बिना price calculate ही नहीं हो सकता।**
+
+### Fields:
+| Field | Description |
+|---|---|
+| `item_name` | Item का नाम (e.g., "Double Bed", "Fridge", "Sofa 3-Seater", "Washing Machine") |
+| `volume_score` | Item कितनी space लेता है (1 = छोटा, 3 = medium, 5 = बड़ा) |
+| `status` | Active / Inactive |
+
+### Actions: Create, Edit (Drawer), Delete
+
+---
+
+## 9. ➕ Add-On Services (Master)
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/addons` |
+| **Controller** | [AddOnController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/AddOnController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Basic shifting सिर्फ सामान उठाकर ले जाना है, लेकिन बहुत से customers को **extra services** भी चाहिए — Packing, Unpacking, AC Shifting, Carpenter, Insurance etc. ये सब **add-on services** हैं जिनकी अलग-अलग fixed price है। Booking बनाते वक़्त admin इन्हें select करता है, और **addon_charges automatically total amount में जुड़ जाते हैं।** इससे business **extra revenue generate** कर सकता है और customer को **customized service** मिलती है।
+
+### Fields:
+| Field | Description |
+|---|---|
+| `addon_name` | Service नाम (e.g., "Full Packing", "AC Shifting", "Carpenter", "Insurance") |
+| `price` | Fixed price (₹) |
+| `status` | Active / Inactive |
+
+### Actions: Create, Edit (Drawer), Delete
+
+---
+
+## 10. ⭐ Feedback & Ratings
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/feedback` |
+| **Controller** | [FeedbackController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/FeedbackController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Shifting complete होने के बाद customer **mobile app से feedback/rating** देता है। Admin को ये feedback देखना ज़रूरी है ताकि **service quality monitor** कर सके। अगर बहुत poor ratings आ रही हैं तो admin को पता चलेगा कि कहाँ problem है। **ये module customer satisfaction track करता है और business improvement में help करता है।** ये Read-Only module है — admin सिर्फ देख सकता है, edit नहीं कर सकता।
+
+### DataTable Columns:
+| Column | Description |
+|---|---|
+| Booking No. | कौनसी booking का feedback है |
+| Customer Name | किस customer ने दिया |
+| Rating Stars | 1-5 ⭐ visual rating |
+| Comment | Customer का feedback text |
+| Label | Excellent (4-5⭐) 🟢, Average (3⭐) 🟡, Poor (1-2⭐) 🔴 |
+| Date | कब feedback दिया |
+
+---
+
+## 11. 📊 Reports
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/reports` |
+| **Controller** | [ReportController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/ReportController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Business owner/manager को **specific time period की booking data analyze** करनी होती है — "इस महीने कितनी bookings हुईं?", "कितनी cancel हुईं?", "last quarter का data दो।" ये module **date range filter और status filter** लगाकर specific data निकालने देता है। **ये decision-making tool है — business performance analyze करने और future planning के लिए इस्तेमाल होता है।**
+
+### Filters:
+| Filter | Description |
+|---|---|
+| **From Date** | Shifting date "से" |
+| **To Date** | Shifting date "तक" |
+| **Status** | Specific status (Confirmed, Completed, Cancelled, etc.) |
+
+### DataTable: Customer Name, Booking No., Amount (₹), Status Badge
+
+---
+
+## 12. 👥 User Management
+
+| Detail | Info |
+|---|---|
+| **Route** | `/user` |
+| **Controller** | [UserController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/UserController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Admin panel में **सिर्फ owner नहीं, बल्कि staff members भी login करते हैं** — Manager, Accountant, Support Staff etc. ये module **admin panel access वाले users create और manage** करता है। हर user को **specific role assign** होता है (Spatie Permission), जिससे role के हिसाब से access control होता है। **ये Customers module से बिल्कुल अलग है — Customers वो हैं जो shifting service लेते हैं, Users वो हैं जो admin panel operate करते हैं।**
+
+### Features:
+| Action | Description |
+|---|---|
+| **List** | सभी users — image, name, email, mobile, roles (badges), status |
+| **Create (➕)** | New user — name, email, mobile, password, status, roles select |
+| **Edit (✏️)** | User details update (Drawer) |
+| **Delete (🗑)** | User delete |
+
+---
+
+## 13. 🔐 Roles & Permissions
+
+| Detail | Info |
+|---|---|
+| **Route** | `/role` |
+| **Controller** | [RoleController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/RoleController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> सभी staff members को **सबकुछ access नहीं देना चाहिए।** Accountant को सिर्फ Revenue दिखे, Manager को Bookings, Support Staff को सिर्फ Customer module। ये module **roles बनाने और हर role को specific permissions assign** करने देता है। जैसे "Manager" role को Booking CRUD permissions दो, लेकिन Settings access मत दो। **ये security और access control का backbone है — बिना इसके कोई भी user सबकुछ access कर सकता है।**
+
+### Features:
+| Action | Description |
+|---|---|
+| **List** | सभी roles — name, permissions count |
+| **Create (➕)** | New role बनाएं (unique name) |
+| **Edit (✏️)** | Role name update (Drawer) |
+| **Delete (🗑)** | Role delete (⚠️ "Admin" role delete नहीं हो सकता — protected) |
+| **Permissions (🔑)** | Module-wise permissions toggle — checkbox matrix से on/off करें |
+
+---
+
+## 14. ⚙️ General Settings
+
+| Detail | Info |
+|---|---|
+| **Route** | `/settings` |
+| **Controller** | [SystemSettingController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/SystemSettingController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> Admin panel का **branding और basic configuration** change करने के लिए। अगर company का logo बदलना है, favicon update करना है, या footer text change करना है — तो **developer के पास जाने की ज़रूरत नहीं, admin खुद यहाँ से कर सकता है।** Settings key-value format में database में store होती हैं।
+
+### Settings:
+| Setting | Description |
+|---|---|
+| **Logo** | Sidebar logo image upload |
+| **Favicon** | Browser tab favicon upload |
+| **Footer Text** | Footer copyright text |
+
+---
+
+## 15. 💲 Pricing Settings
+
+| Detail | Info |
+|---|---|
+| **Route** | `/admin/pricing` |
+| **Controller** | [PricingController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/Admin/PricingController.php) |
+| **Used By** | [PricingEngine.php](file:///d:/ServiceHub/app/Services/PricingEngine.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> PricingEngine जो auto-pricing करता है, उसमें **कुछ rates configurable हैं** — per km rate, floor charge, weekend surcharge %, month-end surcharge %। अगर business owner decide करे कि "अब per km ₹20 नहीं ₹25 चार्ज करना है" तो **code change करने की ज़रूरत नहीं — यहाँ से value change कर दो, सारी नई bookings में नई rate automatically apply होगी।** ये module pricing engine को **runtime configurable** बनाता है।
+
+### Configurable Settings:
+| Key | Default | क्या control करता है |
+|---|---|---|
+| `per_km_rate` | ₹20 | Extra distance charge per km (first 5 km free) |
+| `per_floor_charge` | ₹150 | Floor carry charge per floor (बिना lift) |
+| `weekend_surge_percentage` | 10% | Saturday/Sunday surcharge (base + distance पर) |
+| `month_end_surge_percentage` | 15% | Month-end surcharge (last 3 + first 2 days) |
+| `SURVEY_THRESHOLD` | 310 | Volume score limit — इससे ऊपर manual survey required |
+
+---
+
+## 16. 👤 Profile Settings
+
+| Detail | Info |
+|---|---|
+| **Route** | `/profile` |
+| **Controller** | [ProfileController.php](file:///d:/ServiceHub/app/Http/Controllers/Backend/ProfileController.php) |
+
+### 🎯 Purpose (ये Module क्यों बना है):
+> हर logged-in user (admin/staff) को **अपनी personal profile manage** करने का option होना चाहिए। Password change करना, profile photo update करना, email बदलना — ये सब **user खुद कर सके बिना किसी admin से request किए।** Account delete करने का option भी है (password confirm required)।
+
+### Features:
+| Action | Description |
+|---|---|
+| **Edit Profile** | Name, email, profile image update |
+| **Change Password** | New password set |
+| **Remove Image** | Profile photo हटाएं |
+| **Delete Account** | Account permanently delete (password confirm ज़रूरी) |
+
+---
+
+## 🔗 Mobile App API Endpoints
+
+Admin panel के साथ एक **Customer Mobile App API** भी है:
+
+### 🎯 Purpose: Customer **mobile app से** register, login, booking request भेजना, bookings देखना — ये सब API से होता है।
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/check-mobile` | POST | Mobile number registered है या नहीं check करो |
+| `/api/register` | POST | New customer registration |
+| `/api/verify-otp` | POST | OTP verify करो (login complete) |
+| `/api/resend-otp` | POST | OTP दोबारा भेजो |
+| `/api/logout` | POST | App logout |
+| `/api/user` | GET | Current logged-in user details |
+| `/api/booking-requests` | GET | Customer की booking requests list |
+| `/api/booking-requests` | POST | New shifting request create |
+| `/api/bookings` | GET | Customer की confirmed bookings list |
+| `/api/bookings/{id}` | GET | Booking detail |
+| `/api/bookings/{id}/cancel` | POST | Booking cancel |
+
+---
+
+## 📐 System Flow Diagram
+
+```mermaid
+graph TD
+    A["📱 Customer Mobile App"] -->|API: booking-request| B["📩 Booking Requests"]
+    B -->|Admin Approve ✅| C["📋 Bookings"]
+    D["🖥️ Admin Panel"] -->|Manual Create| C
+    C -->|Auto Price| E["💲 PricingEngine"]
+    E --> F["📦 Items + Volume Score"]
+    E --> G["📂 Categories + 🚛 Vehicles"]
+    E --> H["➕ Add-On Services"]
+    E --> I["📍 Distance - Haversine"]
+    E --> J["📅 Surcharges - Weekend/Month-end"]
+    C -->|Completed| K["💰 Revenue"]
+    C -->|Completed| L["⭐ Feedback"]
+    C --> M["📊 Reports"]
+    N["👥 Users + 🔐 Roles"] -->|Access Control| D
+    O["⚙️ Settings"] -->|Config| D
+    O -->|Pricing Config| E
+```
+
+---
+
+## 📝 Models & Relationships
+
+| Model | Purpose | Key Relationships |
+|---|---|---|
+| **User** | Customers + Admin/Staff दोनों | hasMany Bookings, has Roles (Spatie) |
+| **Booking** | Core shifting order | belongsTo Customer, Category, Vehicle; belongsToMany Items, AddOns; hasOne Feedback |
+| **BookingRequest** | App से आई request | belongsTo Customer → Approve = Booking बने |
+| **Category** | Shifting category (1BHK, 2BHK) | belongsTo Vehicle, defines base_fare + score range |
+| **Vehicle** | Transport vehicle | hasMany Categories |
+| **Item** | Shifting item (Bed, Sofa) | belongsToMany Bookings, has volume_score |
+| **AddOn** | Extra service (Packing, AC) | belongsToMany Bookings, has fixed price |
+| **Feedback** | Customer review | belongsTo Booking + Customer |
+| **Setting** | System config | Key-Value store (logo, favicon, footer) |
+| **PricingSetting** | Pricing config | Key-Value (per_km_rate, floor_charge, surcharge %) |
+| **OrderTracking** | Booking status history | belongsTo Booking |
+
+---
+
+> **Total Modules: 16** (Dashboard + 15 Functional Modules)  
+> **Tech Stack:** Laravel 11, Spatie Permission, Yajra DataTables, Bootstrap 5, Sanctum API Auth

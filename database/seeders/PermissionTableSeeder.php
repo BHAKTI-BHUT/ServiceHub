@@ -24,18 +24,20 @@ class PermissionTableSeeder extends Seeder
         // Create Permissions
         foreach ($modules as $module => $permissions) {
             foreach ($permissions as $permission) {
-                Permission::findOrCreate($permission);
+                Permission::findOrCreate($permission, 'web');
             }
         }
 
         // Create Roles and Assign Permissions
         foreach ($rolesConfig as $roleName => $assignedModules) {
-            $role = Role::findOrCreate($roleName);
+            $role = Role::findOrCreate($roleName, 'web');
 
             $permissionsToAssign = [];
             foreach ($assignedModules as $moduleName) {
                 if (isset($modules[$moduleName])) {
-                    $permissionsToAssign = array_merge($permissionsToAssign, $modules[$moduleName]);
+                    foreach ($modules[$moduleName] as $pName) {
+                        $permissionsToAssign[] = Permission::where('name', $pName)->where('guard_name', 'web')->first();
+                    }
                 }
             }
 
