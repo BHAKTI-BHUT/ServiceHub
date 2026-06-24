@@ -22,7 +22,11 @@
 <ul class="main-menu" id="all-menu-items" role="menu">
 
     {{-- ── MAIN ────────────────────────────────────────────── --}}
+    @canany(['view dashboard'])
     <li class="menu-title" role="presentation">Main</li>
+    @endcanany
+
+    @can('view dashboard')
     <li class="slide">
         <a href="{{ route('dashboard') }}"
            class="side-menu__item {{ request()->routeIs('dashboard') ? 'active' : '' }}" role="menuitem">
@@ -30,11 +34,15 @@
             <span class="side-menu__label">Dashboard</span>
         </a>
     </li>
+    @endcan
 
     {{-- ── SERVICE MANAGEMENT ──────────────────────────────── --}}
+    @canany(['view customer', 'view booking', 'view booking request'])
     <li class="menu-title" role="presentation">Service Management</li>
+    @endcanany
 
     {{-- Customers --}}
+    @can('view customer')
     <li class="slide">
         <a href="{{ route('customer.index') }}"
            class="side-menu__item {{ $isCustomerActive ? 'active' : '' }}" role="menuitem">
@@ -42,8 +50,10 @@
             <span class="side-menu__label">Customers</span>
         </a>
     </li>
+    @endcan
 
     {{-- Bookings (dropdown) --}}
+    @canany(['view booking request', 'view booking'])
     <li class="slide {{ $isBookingsActive ? 'active open' : '' }}">
         <a href="#!" class="side-menu__item {{ $isBookingsActive ? 'active' : '' }}" role="menuitem">
             <span class="side_menu_icon"><i class="ri-calendar-todo-line"></i></span>
@@ -51,22 +61,28 @@
             <i class="ri-arrow-down-s-line side-menu__angle"></i>
         </a>
         <ul class="slide-menu" role="menu">
+            @can('view booking request')
             <li class="slide">
                 <a href="{{ route('booking-request.index') }}"
                    class="side-menu__item {{ $isBookingReqActive ? 'active' : '' }}" role="menuitem">
                     Booking Requests
                 </a>
             </li>
+            @endcan
+            @can('view booking')
             <li class="slide">
                 <a href="{{ route('booking.index') }}"
                    class="side-menu__item {{ $isBookingActive ? 'active' : '' }}" role="menuitem">
                     Booking Manage
                 </a>
             </li>
+            @endcan
         </ul>
     </li>
+    @endcanany
 
     {{-- Revenue --}}
+    @can('view revenue')
     <li class="slide">
         <a href="{{ route('admin.revenue') }}"
            class="side-menu__item {{ $isRevenueActive ? 'active' : '' }}" role="menuitem">
@@ -74,8 +90,10 @@
             <span class="side-menu__label">Revenue</span>
         </a>
     </li>
+    @endcan
 
     {{-- ── MASTER MANAGEMENT ───────────────────────────────── --}}
+    @canany(['view vehicle', 'view category', 'view item', 'view addon'])
     <li class="menu-title" role="presentation">Master Management</li>
 
     <li class="slide {{ $isMastersActive ? 'active open' : '' }}">
@@ -85,23 +103,24 @@
             <i class="ri-arrow-down-s-line side-menu__angle"></i>
         </a>
         <ul class="slide-menu" role="menu">
-            {{-- Vehicles --}}
+            @can('view vehicle')
             <li class="slide">
                 <a href="{{ route('admin.vehicles') }}"
                    class="side-menu__item {{ $isVehicleActive ? 'active' : '' }}" role="menuitem">
                     Vehicles
                 </a>
             </li>
+            @endcan
 
-            {{-- Categories --}}
+            @can('view category')
             <li class="slide">
                 <a href="{{ route('admin.categories') }}"
                    class="side-menu__item {{ $isCategoryActive ? 'active' : '' }}" role="menuitem">
                     Categories
                 </a>
             </li>
+            @endcan
 
-            {{-- Item Sizes Master --}}
             <li class="slide">
                 <a href="{{ route('admin.item-sizes') }}"
                    class="side-menu__item {{ request()->routeIs('admin.item-sizes*') ? 'active' : '' }}" role="menuitem">
@@ -109,27 +128,33 @@
                 </a>
             </li>
 
-            {{-- Item Master --}}
+            @can('view item')
             <li class="slide">
                 <a href="{{ route('admin.items') }}"
                    class="side-menu__item {{ $isItemActive ? 'active' : '' }}" role="menuitem">
                     Item Master
                 </a>
             </li>
+            @endcan
 
-            {{-- Add-On Services --}}
+            @can('view addon')
             <li class="slide">
                 <a href="{{ route('admin.addons') }}"
                    class="side-menu__item {{ $isAddonActive ? 'active' : '' }}" role="menuitem">
                     Add-On Services
                 </a>
             </li>
+            @endcan
         </ul>
     </li>
+    @endcanany
 
     {{-- ── REPORTS & FEEDBACK ──────────────────────────────── --}}
+    @canany(['view feedback', 'view report'])
     <li class="menu-title" role="presentation">Reports & Feedback</li>
+    @endcanany
 
+    @can('view feedback')
     <li class="slide">
         <a href="{{ route('admin.feedback') }}"
            class="side-menu__item {{ $isFeedbackActive ? 'active' : '' }}" role="menuitem">
@@ -137,7 +162,9 @@
             <span class="side-menu__label">Feedback & Ratings</span>
         </a>
     </li>
+    @endcan
 
+    @can('view report')
     <li class="slide">
         <a href="{{ route('admin.reports') }}"
            class="side-menu__item {{ $isReportActive ? 'active' : '' }}" role="menuitem">
@@ -145,8 +172,10 @@
             <span class="side-menu__label">Reports</span>
         </a>
     </li>
+    @endcan
 
     {{-- ── APPLICATIONS ────────────────────────────────────── --}}
+    @canany(['view user', 'view role'])
     <li class="menu-title" role="presentation">Applications</li>
 
     {{-- User Management (dropdown) --}}
@@ -157,22 +186,28 @@
             <i class="ri-arrow-down-s-line side-menu__angle"></i>
         </a>
         <ul class="slide-menu" role="menu">
+            @can('view user')
             <li class="slide">
                 <a href="{{ route('user.index') }}"
                    class="side-menu__item {{ $isUserActive ? 'active' : '' }}" role="menuitem">
                     Users
                 </a>
             </li>
+            @endcan
+            @can('view role')
             <li class="slide">
                 <a href="{{ route('role.index') }}"
                    class="side-menu__item {{ $isRoleActive ? 'active' : '' }}" role="menuitem">
                     Roles & Permissions
                 </a>
             </li>
+            @endcan
         </ul>
     </li>
+    @endcanany
 
     {{-- ── SETTINGS ─────────────────────────────────────────── --}}
+    @canany(['view settings', 'view pricing settings', 'view profile settings'])
     <li class="menu-title" role="presentation">Settings</li>
 
     <li class="slide {{ $isSettingsActive ? 'active open' : '' }}">
@@ -182,25 +217,32 @@
             <i class="ri-arrow-down-s-line side-menu__angle"></i>
         </a>
         <ul class="slide-menu" role="menu">
+            @can('view settings')
             <li class="slide">
                 <a href="{{ route('settings.edit') }}"
                    class="side-menu__item {{ request()->routeIs('settings.edit') ? 'active' : '' }}" role="menuitem">
                     General Settings
                 </a>
             </li>
+            @endcan
+            @can('view pricing settings')
             <li class="slide">
                 <a href="{{ route('admin.pricing') }}"
                    class="side-menu__item {{ $isPricingActive ? 'active' : '' }}" role="menuitem">
                     Pricing Settings
                 </a>
             </li>
+            @endcan
+            @can('view profile settings')
             <li class="slide">
                 <a href="{{ route('profile.edit') }}"
                    class="side-menu__item {{ request()->routeIs('profile.edit') ? 'active' : '' }}" role="menuitem">
                     Profile Settings
                 </a>
             </li>
+            @endcan
         </ul>
     </li>
+    @endcanany
 
 </ul>

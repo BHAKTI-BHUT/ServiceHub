@@ -2,6 +2,9 @@
 
 return [
     'modules' => [
+        'Dashboard' => [
+            'view dashboard',
+        ],
         'User Management' => [
             'view user',
             'create user',
@@ -16,12 +19,35 @@ return [
         ],
         'Permission Management' => [
             'view permission',
+            'view user permissions',
             'create permission',
             'edit permission',
             'delete permission',
         ],
-        'Dashboard' => [
-            'view dashboard',
+        'Customer Management' => [
+            'view customer',
+            'create customer',
+            'edit customer',
+            'delete customer',
+        ],
+        'Booking Request Management' => [
+            'view booking request',
+            'approve booking request',
+            'reject booking request',
+        ],
+        'Booking Management' => [
+            'view booking',
+            'create booking',
+            'edit booking',
+            'delete booking',
+        ],
+        'Settings Management' => [
+            'view settings',
+            'edit settings',
+            'view pricing settings',
+            'edit pricing settings',
+            'view profile settings',
+            'edit profile settings',
         ],
     ],
     'roles' => [

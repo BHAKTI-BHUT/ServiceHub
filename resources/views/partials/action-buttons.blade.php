@@ -1,8 +1,7 @@
 <div class="hstack gap-2 fs-15">
     @if (isset($permission_route))
         <a href="{{ $permission_route }}" class="btn icon-btn-sm btn-light-success" data-bs-toggle="tooltip"
-            data-bs-placement="bottom" data-bs-custom-class="tooltip-dark" data-bs-title="Permissions" data-drawer="true"
-            data-drawer-title="Permissions">
+            data-bs-placement="bottom" data-bs-custom-class="tooltip-dark" data-bs-title="Permissions">
             <i class="ri-shield-keyhole-line"></i>
         </a>
     @endif

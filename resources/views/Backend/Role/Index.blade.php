@@ -16,13 +16,12 @@
             <div class="card mb-0 h-100">
                 <table id="role-table" class="table-hover align-middle table table-nowrap w-100">
                     <thead class="bg-light bg-opacity-30">
-                        <tr>
-                            <th>ID</th>
-                            <th>Role Name</th>
-                            <th>Permissions Count</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
+    <tr>
+        <th>ID</th>
+        <th>Role Name</th>
+        <th>Action</th>
+    </tr>
+</thead>
                 </table>
             </div>
         </div>
@@ -42,12 +41,7 @@
                     data: 'name',
                     name: 'name'
                 },
-                {
-                    data: 'permissions_count',
-                    name: 'permissions_count',
-                    orderable: false,
-                    searchable: false
-                },
+
                 {
                     data: 'action',
                     name: 'action',

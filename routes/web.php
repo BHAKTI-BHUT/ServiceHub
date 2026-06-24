@@ -65,6 +65,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        Route::get('/{user}/permissions', [UserController::class, 'permissions'])->name('permissions');
+        Route::put('/{user}/permissions', [UserController::class, 'updatePermissions'])->name('permissions.update');
     });
 
     // ── Role Management ────────────────────────────────────

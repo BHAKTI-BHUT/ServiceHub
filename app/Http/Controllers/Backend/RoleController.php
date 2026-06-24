@@ -15,18 +15,13 @@ class RoleController extends Controller
             $roles = Role::orderBy('created_at', 'desc');
 
             return datatables()->of($roles)
-                ->addColumn('permissions_count', function ($role) {
-                    return $role->permissions->count() . ' Permissions';
-                })
                 ->addColumn('action', function ($role) {
                     return view('partials.action-buttons', [
                         'id' => $role->id,
                         'edit_route' => route('role.edit', $role->id),
                         'delete_route' => route('role.destroy', $role->id),
-                        'permission_route' => route('role.permissions', $role->id),
                     ])->render();
                 })
-                ->rawColumns(['action'])
                 ->make(true);
         }
 

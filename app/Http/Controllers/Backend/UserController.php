@@ -73,7 +73,8 @@ class UserController extends Controller
                     return view('partials.action-buttons', [
                         'id' => $user->id,
                         'edit_route' => route('user.edit', $user->id),
-                        'delete_route' => route('user.destroy', $user->id)
+                        'delete_route' => route('user.destroy', $user->id),
+                        'permission_route' => route('user.permissions', $user->id),
                     ])->render();
                 })
                 ->rawColumns(['roles', 'status', 'action'])
@@ -178,5 +179,32 @@ class UserController extends Controller
         }
 
         return redirect()->route('user.index')->with('success', 'User deleted successfully!');
+    }
+
+    /**
+     * Show permissions page for a specific user.
+     */
+    public function permissions(User $user)
+    {
+        $modules = config('PermissionModule.modules');
+        $userPermissions = $user->permissions->pluck('name')->toArray();
+
+        return view('Backend.User.Permissions', compact('user', 'modules', 'userPermissions'));
+    }
+
+    /**
+     * Update permissions for a specific user.
+     */
+    public function updatePermissions(Request $request, User $user)
+    {
+        $permissions = $request->input('permissions', []);
+        $user->syncPermissions($permissions);
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Permissions updated successfully!']);
+        }
+
+        return redirect()->route('user.permissions', $user->id)
+            ->with('success', 'Permissions updated successfully!');
     }
 }

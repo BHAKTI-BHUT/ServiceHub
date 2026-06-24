@@ -45,17 +45,30 @@ class CustomerController extends Controller
                     return '<span class="badge ' . $badge . '">' . $label . '</span>';
                 })
                 ->addColumn('action', function ($customer) {
-                    $showBtn = '<a href="' . route('customer.show', $customer->id) . '" class="btn icon-btn-sm btn-light-info" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="View History"><i class="ri-eye-line"></i></a>';
-                    $editBtn = '<a href="' . route('customer.edit', $customer->id) . '" class="btn icon-btn-sm btn-light-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Edit" data-drawer="true" data-drawer-title="Edit Customer"><i class="ri-pencil-line"></i></a>';
-                    $deleteForm = '
-                        <form action="' . route('customer.destroy', $customer->id) . '" method="POST" class="delete-form" style="display:inline;">
-                            ' . csrf_field() . '
-                            ' . method_field('DELETE') . '
-                            <button type="submit" class="btn icon-btn-sm btn-light-danger delete-item" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Delete">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>
-                        </form>';
-                    return '<div class="hstack gap-2 fs-15">' . $showBtn . $editBtn . $deleteForm . '</div>';
+                    $user = auth()->user();
+                    $buttons = '<div class="hstack gap-2 fs-15">';
+
+                    if ($user->can('view customer')) {
+                        $buttons .= '<a href="' . route('customer.show', $customer->id) . '" class="btn icon-btn-sm btn-light-info" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="View History"><i class="ri-eye-line"></i></a>';
+                    }
+
+                    if ($user->can('edit customer')) {
+                        $buttons .= '<a href="' . route('customer.edit', $customer->id) . '" class="btn icon-btn-sm btn-light-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Edit" data-drawer="true" data-drawer-title="Edit Customer"><i class="ri-pencil-line"></i></a>';
+                    }
+
+                    if ($user->can('delete customer')) {
+                        $buttons .= '
+                            <form action="' . route('customer.destroy', $customer->id) . '" method="POST" class="delete-form" style="display:inline;">
+                                ' . csrf_field() . '
+                                ' . method_field('DELETE') . '
+                                <button type="submit" class="btn icon-btn-sm btn-light-danger delete-item" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Delete">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </form>';
+                    }
+
+                    $buttons .= '</div>';
+                    return $buttons;
                 })
                 ->rawColumns(['image', 'status', 'action'])
                 ->make(true);
