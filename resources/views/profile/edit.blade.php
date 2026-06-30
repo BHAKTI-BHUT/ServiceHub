@@ -1,7 +1,7 @@
 @extends('partials.layouts.master')
 
 @section('title')
-    Profile Settings | Herozi
+    Profile Settings | Bhandari Packers
 @endsection
 
 @section('sub-title', 'Profile')

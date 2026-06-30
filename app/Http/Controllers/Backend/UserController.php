@@ -94,7 +94,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
-        return view('Backend.User.Create', compact('roles'));
+        $supervisors = User::role('Superviser')->get();
+        return view('Backend.User.Create', compact('roles', 'supervisors'));
     }
 
     public function store(Request $request)
@@ -105,7 +106,9 @@ class UserController extends Controller
             'mobile' => 'nullable|string|max:20|unique:users,mobile',
             'status' => 'required|in:active,inactive',
             'password' => 'required|min:6',
-            'roles' => 'required|array'
+            'roles' => 'required|array',
+            'supervisors' => 'nullable|array',
+            'supervisors.*' => 'exists:users,id'
         ]);
 
         if ($validator->fails()) {
@@ -125,6 +128,10 @@ class UserController extends Controller
 
         $user->assignRole($request->roles);
 
+        if (in_array('Vendor', $request->roles)) {
+            $user->supervisors()->sync($request->supervisors ?? []);
+        }
+
         if ($request->ajax()) {
             return response()->json(['message' => 'User created successfully!']);
         }
@@ -136,7 +143,9 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $userRoles = $user->roles->pluck('name')->toArray();
-        return view('Backend.User.Edit', compact('user', 'roles', 'userRoles'));
+        $supervisors = User::role('Superviser')->get();
+        $userSupervisors = $user->supervisors->pluck('id')->toArray();
+        return view('Backend.User.Edit', compact('user', 'roles', 'userRoles', 'supervisors', 'userSupervisors'));
     }
 
     public function update(Request $request, User $user)
@@ -147,7 +156,9 @@ class UserController extends Controller
             'mobile' => 'nullable|string|max:20|unique:users,mobile,' . $user->id,
             'status' => 'required|in:active,inactive',
             'password' => 'nullable|min:6',
-            'roles' => 'required|array'
+            'roles' => 'required|array',
+            'supervisors' => 'nullable|array',
+            'supervisors.*' => 'exists:users,id'
         ]);
 
         if ($validator->fails()) {
@@ -170,11 +181,54 @@ class UserController extends Controller
 
         $user->syncRoles($request->roles);
 
+        if (in_array('Vendor', $request->roles)) {
+            $user->supervisors()->sync($request->supervisors ?? []);
+        } else {
+            $user->supervisors()->detach();
+        }
+
         if ($request->ajax()) {
             return response()->json(['message' => 'User updated successfully!']);
         }
 
         return redirect()->route('user.index')->with('success', 'User updated successfully!');
+    }
+
+    /**
+     * Quick create supervisor from vendor form view.
+     */
+    public function quickCreateSupervisor(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'mobile' => 'nullable|string|max:20|unique:users,mobile',
+            'password' => 'required|min:6'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'mobile' => $request->mobile,
+            'status' => 'active',
+            'password' => Hash::make($request->password),
+        ]);
+
+        $user->assignRole('Superviser');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Supervisor created and selected!',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'mobile' => $user->mobile,
+            ]
+        ]);
     }
 
     public function destroy(User $user)

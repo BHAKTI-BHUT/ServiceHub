@@ -1,7 +1,7 @@
 @extends('partials.layouts.master')
 
 @section('title')
-    {{ $customer->name }} Details | Herozi
+    {{ $customer->name }} Details | Bhandari Packers
 @endsection
 
 @section('sub-title', 'Customer Profile')

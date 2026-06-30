@@ -1,6 +1,6 @@
 @extends('partials.layouts.master2')
 
-@section('title', 'UI Tooltip | Herozi - The Worlds Best Selling Bootstrap Admin & Dashboard Template by SRBThemes')
+@section('title', 'UI Tooltip | Bhandari Packers - The Worlds Best Selling Bootstrap Admin & Dashboard Template by SRBThemes')
 @section('sub-title', 'Tooltip')
 @section('pagetitle', 'Home')
 @section('buttonTitle', 'Share')

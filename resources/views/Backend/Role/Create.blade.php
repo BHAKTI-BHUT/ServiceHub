@@ -1,6 +1,6 @@
 @extends('partials.layouts.master')
 
-@section('title', 'Add New Role | Herozi')
+@section('title', 'Add New Role | Bhandari Packers')
 
 @section('sub-title', 'Add Role')
 @section('pagetitle', 'Dashboard')

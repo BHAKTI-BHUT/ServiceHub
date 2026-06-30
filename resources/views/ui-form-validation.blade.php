@@ -1,6 +1,6 @@
 @extends('partials.layouts.master2')
 
-    @section('title', 'Form Validation | Herozi - The Worlds Best Selling Bootstrap Admin & Dashboard Template by SRBThemes')
+    @section('title', 'Form Validation | Bhandari Packers - The Worlds Best Selling Bootstrap Admin & Dashboard Template by SRBThemes')
     @section('sub-title', 'Inputs Select' )
     @section('pagetitle', 'Home')
     @section('buttonTitle', 'Share')

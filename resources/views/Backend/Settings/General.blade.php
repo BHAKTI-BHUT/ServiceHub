@@ -1,6 +1,6 @@
 @extends('partials.layouts.master')
 
-@section('title', 'System Settings | Herozi')
+@section('title', 'System Settings | Bhandari Packers')
 
 @section('sub-title', 'System Settings')
 @section('pagetitle', 'Settings')

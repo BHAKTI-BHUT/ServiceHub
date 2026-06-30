@@ -1,7 +1,7 @@
 @extends('partials.layouts.master')
 
 @section('title')
-    Booking {{ $booking->booking_number }} | Herozi
+    Booking {{ $booking->booking_number }} | Bhandari Packers
 @endsection
 
 @section('sub-title', 'Booking Details')

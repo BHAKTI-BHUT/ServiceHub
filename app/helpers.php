@@ -6,7 +6,7 @@ if (!function_exists('getSettings')) {
         // Return a dummy object to prevent errors in views
         return (object) [
             'logo' => asset('assets/images/light-logo.png'),
-            'site_name' => 'Herozi',
+            'site_name' => 'Bhandari Packers',
             'favicon' => asset('assets/images/light-logo.png'),
         ];
     }

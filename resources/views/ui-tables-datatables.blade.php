@@ -1,6 +1,6 @@
 @extends('partials.layouts.master')
 
-@section('title', 'Datatable Tables | Herozi - The Worlds Best Selling Bootstrap Admin & Dashboard Template by
+@section('title', 'Datatable Tables | Bhandari Packers - The Worlds Best Selling Bootstrap Admin & Dashboard Template by
     SRBThemes')
 
 @section('sub-title', 'Datatable')

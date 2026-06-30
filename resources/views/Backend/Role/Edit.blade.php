@@ -1,7 +1,7 @@
 @extends('partials.layouts.master')
 
 @section('title')
-    Edit {{ $role->name }} | Herozi
+    Edit {{ $role->name }} | Bhandari Packers
 @endsection
 
 @section('sub-title', 'Edit Role')

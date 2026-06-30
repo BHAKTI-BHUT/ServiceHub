@@ -1,6 +1,6 @@
 @extends('partials.layouts.master3')
 
-@section('title', 'Dashboard | Herozi - Design & Developed by Bhakti.')
+@section('title', 'Dashboard | Bhandari Packers - Design & Developed by Bhakti.')
 @section('sub-title', 'Dashboard Details')
 @section('pagetitle', 'Dashboard')
 @section('buttonTitle', 'Share')

@@ -1,6 +1,6 @@
 @extends('partials.layouts.master2')
 
-    @section('title', 'Form Layout | Herozi - The Worlds Best Selling Bootstrap Admin & Dashboard Template by SRBThemes')
+    @section('title', 'Form Layout | Bhandari Packers - The Worlds Best Selling Bootstrap Admin & Dashboard Template by SRBThemes')
     @section('sub-title', 'Form Layout' )
     @section('pagetitle', 'Home')
     @section('buttonTitle', 'Share')

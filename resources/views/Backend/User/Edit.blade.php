@@ -1,7 +1,7 @@
 @extends('partials.layouts.master')
 
 @section('title')
-    Edit {{ $user->name }} | Herozi
+    Edit {{ $user->name }} | Bhandari Packers
 @endsection
 
 @section('sub-title', 'Edit User')
@@ -74,6 +74,23 @@
                                     </select>
                                     <div class="invalid-feedback">Please select at least one role.</div>
                                 </div>
+                                <div class="col-md-12 {{ in_array('Vendor', $userRoles) ? '' : 'd-none' }}" id="supervisors-group">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="supervisors" class="form-label mb-0">Assign Supervisors</label>
+                                        <button type="button" class="btn btn-sm btn-link text-primary p-0" data-bs-toggle="modal" data-bs-target="#quickCreateSupervisorModal">
+                                            <i class="ri-add-line align-bottom"></i> Create New Supervisor
+                                        </button>
+                                    </div>
+                                    <select class="form-select select2" id="supervisors" name="supervisors[]" multiple>
+                                        @foreach ($supervisors as $supervisor)
+                                            <option value="{{ $supervisor->id }}"
+                                                {{ in_array($supervisor->id, $userSupervisors) ? 'selected' : '' }}>
+                                                {{ $supervisor->name }} ({{ $supervisor->mobile ?? 'No Mobile' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="invalid-feedback">Please select at least one supervisor.</div>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -81,6 +98,8 @@
             </div>
         </div>
     </div>
+
+    @include('Backend.User.Partials.QuickCreateSupervisorModal')
 
 @endsection
 
@@ -91,6 +110,19 @@
             $('.select2').select2({
                 width: '100%'
             });
+
+            // Toggle supervisors field based on role selection
+            function toggleSupervisors() {
+                var selectedRoles = $('#roles').val() || [];
+                if (selectedRoles.includes('Vendor')) {
+                    $('#supervisors-group').removeClass('d-none');
+                } else {
+                    $('#supervisors-group').addClass('d-none');
+                    $('#supervisors').val(null).trigger('change');
+                }
+            }
+
+            $('#roles').on('change', toggleSupervisors);
 
             // Form Submission
             $('#editUserForm').on('submit', function(e) {

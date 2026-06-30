@@ -1,7 +1,7 @@
 @extends('partials.layouts.master')
 
 @section('title')
-    {{ ucfirst($role->name) }} Role's Permissions | Herozi
+    {{ ucfirst($role->name) }} Role's Permissions | Bhandari Packers
 @endsection
 
 @section('sub-title')

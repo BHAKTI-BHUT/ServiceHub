@@ -1,6 +1,6 @@
 @extends('partials.layouts.master')
 
-@section('title', 'Item Sizes Master | Herozi')
+@section('title', 'Item Sizes Master | Bhandari Packers')
 @section('sub-title', 'Item Sizes Management')
 @section('pagetitle', 'Master Settings')
 @section('buttonTitle', '+ Add Size')
