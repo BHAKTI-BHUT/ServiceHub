@@ -1,4 +1,4 @@
-@extends('partials.Layouts.master3')
+@extends('partials.layouts.master3')
 
 @section('title', 'Dashboard | Herozi - Design & Developed by Bhakti.')
 @section('sub-title', 'Dashboard Details')

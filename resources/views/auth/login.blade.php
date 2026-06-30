@@ -26,7 +26,7 @@
                                 <img src="{{ asset('assets/images/light-logo.png') }}" alt="Om Homeopathy Logo"
                                     class="img-fluid" style="max-height: 80px;">
                             </div>
-                            <h4 class="fw-normal"><span class="fw-bold text-primary">Welcome To Herozi
+                            <h4 class="fw-normal"><span class="fw-bold text-primary">Welcome To Bhandari Packers
                                 </span>
                             </h4>
                         </div>
