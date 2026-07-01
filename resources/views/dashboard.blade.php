@@ -339,124 +339,152 @@
     <script src="{{ asset('assets/js/dashboards/dashboard-online-course.init.js') }}"></script>
     <script type="module" src="{{ asset('assets/js/app.js') }}"></script>
 
-    {{-- Booking Status Bar Chart — Modern Gradient --}}
+    {{-- Booking Status Bar/Line Chart — Modern Gradient --}}
     <script>
-        (function () {
-            function renderBookingBarChart() {
-                var el = document.querySelector('#booking-bar-chart');
-                if (!el || typeof ApexCharts === 'undefined') return;
+        var bookingChart = null;
 
-                var categories = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
-                var data       = [
-                    {{ $stats['pending_bookings']   ?? 0 }},
-                    {{ $stats['confirmed_bookings'] ?? 0 }},
-                    {{ $stats['completed_bookings'] ?? 0 }},
-                    {{ $stats['cancelled_bookings'] ?? 0 }}
-                ];
+        function renderBookingChart() {
+            var el = document.querySelector('#booking-bar-chart');
+            if (!el || typeof ApexCharts === 'undefined') return;
 
-                var gradientColors = [
-                    { from: '#f59e0b', to: '#fbbf24' },
-                    { from: '#6366f1', to: '#818cf8' },
-                    { from: '#10b981', to: '#34d399' },
-                    { from: '#ef4444', to: '#f87171' }
-                ];
+            var categories = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
+            var data       = [
+                {{ $stats['pending_bookings']   ?? 0 }},
+                {{ $stats['confirmed_bookings'] ?? 0 }},
+                {{ $stats['completed_bookings'] ?? 0 }},
+                {{ $stats['cancelled_bookings'] ?? 0 }}
+            ];
 
-                var options = {
-                    series: [{ name: 'Bookings', data: data }],
-                    chart: {
-                        type: 'bar',
-                        height: 300,
-                        toolbar: { show: false },
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                        animations: {
-                            enabled: true,
-                            easing: 'easeinout',
-                            speed: 900,
-                            animateGradually: { enabled: true, delay: 120 },
-                            dynamicAnimation: { enabled: true, speed: 400 }
-                        }
-                    },
-                    plotOptions: {
-                        bar: {
-                            borderRadius: 12,
-                            borderRadiusApplication: 'end',
-                            columnWidth: '42%',
-                            distributed: true,
-                            dataLabels: { position: 'top' }
-                        }
-                    },
-                    dataLabels: {
+            var options = {
+                series: [{ name: 'Bookings', data: data }],
+                chart: {
+                    type: 'bar',
+                    height: 300,
+                    toolbar: { show: false },
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    animations: {
                         enabled: true,
-                        offsetY: -28,
-                        style: {
-                            fontSize: '14px',
-                            fontWeight: 800,
-                            colors: ['#1a1f36']
-                        },
-                        formatter: function (val) { return val; }
+                        easing: 'easeinout',
+                        speed: 900,
+                        animateGradually: { enabled: true, delay: 120 },
+                        dynamicAnimation: { enabled: true, speed: 400 }
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 12,
+                        borderRadiusApplication: 'end',
+                        columnWidth: '42%',
+                        distributed: true,
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                stroke: {
+                    width: 0,
+                    curve: 'smooth'
+                },
+                dataLabels: {
+                    enabled: true,
+                    offsetY: -28,
+                    style: {
+                        fontSize: '14px',
+                        fontWeight: 800,
+                        colors: ['#1a1f36']
                     },
-                    fill: {
-                        type: 'gradient',
-                        gradient: {
-                            type: 'vertical',
-                            shadeIntensity: 0.4,
-                            opacityFrom: 1,
-                            opacityTo: 0.75,
-                            stops: [0, 100]
+                    formatter: function (val) { return val; }
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        type: 'vertical',
+                        shadeIntensity: 0.4,
+                        opacityFrom: 1,
+                        opacityTo: 0.75,
+                        stops: [0, 100]
+                    }
+                },
+                colors: ['#f59e0b', '#6366f1', '#10b981', '#ef4444'],
+                states: {
+                    hover: { filter: { type: 'darken', value: 0.85 } },
+                    active: { filter: { type: 'darken', value: 0.75 } }
+                },
+                xaxis: {
+                    categories: categories,
+                    labels: {
+                        style: {
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            colors: ['#d97706','#4f46e5','#059669','#dc2626']
                         }
                     },
-                    colors: ['#f59e0b', '#6366f1', '#10b981', '#ef4444'],
-                    states: {
-                        hover: { filter: { type: 'darken', value: 0.85 } },
-                        active: { filter: { type: 'darken', value: 0.75 } }
+                    axisBorder: { show: false },
+                    axisTicks: { show: false }
+                },
+                yaxis: {
+                    labels: {
+                        style: { fontSize: '12px', colors: ['#8a94a6'] },
+                        formatter: function (val) { return Math.floor(val); }
                     },
-                    xaxis: {
-                        categories: categories,
-                        labels: {
-                            style: {
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                colors: ['#d97706','#4f46e5','#059669','#dc2626']
-                            }
+                    min: 0,
+                    tickAmount: 4
+                },
+                grid: {
+                    borderColor: '#f3f4f6',
+                    strokeDashArray: 5,
+                    padding: { top: 10, right: 10, bottom: 0, left: 10 }
+                },
+                legend: { show: false },
+                tooltip: {
+                    theme: 'light',
+                    y: {
+                        formatter: function (val) {
+                            return '<b>' + val + '</b> booking(s)';
                         },
-                        axisBorder: { show: false },
-                        axisTicks: { show: false }
+                        title: { formatter: function (s) { return s + ':'; } }
                     },
-                    yaxis: {
-                        labels: {
-                            style: { fontSize: '12px', colors: ['#8a94a6'] },
-                            formatter: function (val) { return Math.floor(val); }
-                        },
-                        min: 0,
-                        tickAmount: 4
-                    },
-                    grid: {
-                        borderColor: '#f3f4f6',
-                        strokeDashArray: 5,
-                        padding: { top: 10, right: 10, bottom: 0, left: 10 }
-                    },
-                    legend: { show: false },
-                    tooltip: {
-                        theme: 'light',
-                        y: {
-                            formatter: function (val) {
-                                return '<b>' + val + '</b> booking(s)';
-                            },
-                            title: { formatter: function (s) { return s + ':'; } }
-                        },
-                        style: { fontSize: '13px' }
+                    style: { fontSize: '13px' }
+                }
+            };
+
+            bookingChart = new ApexCharts(el, options);
+            bookingChart.render();
+        }
+
+        function switchChartType(type) {
+            if (!bookingChart) return;
+
+            var barBtn = document.getElementById('btn-bar-chart');
+            var lineBtn = document.getElementById('btn-line-chart');
+
+            if (type === 'bar') {
+                if (barBtn) barBtn.classList.add('active-toggle');
+                if (lineBtn) lineBtn.classList.remove('active-toggle');
+
+                bookingChart.updateOptions({
+                    chart: { type: 'bar' },
+                    stroke: { width: 0 },
+                    plotOptions: {
+                        bar: { distributed: true }
                     }
-                };
+                });
+            } else if (type === 'line') {
+                if (lineBtn) lineBtn.classList.add('active-toggle');
+                if (barBtn) barBtn.classList.remove('active-toggle');
 
-                var chart = new ApexCharts(el, options);
-                chart.render();
+                bookingChart.updateOptions({
+                    chart: { type: 'line' },
+                    stroke: { width: 4 },
+                    plotOptions: {
+                        bar: { distributed: false }
+                    }
+                });
             }
+        }
 
-            if (document.readyState === 'complete') {
-                renderBookingBarChart();
-            } else {
-                window.addEventListener('load', renderBookingBarChart);
-            }
-        })();
+        if (document.readyState === 'complete') {
+            renderBookingChart();
+        } else {
+            window.addEventListener('load', renderBookingChart);
+        }
     </script>
 @endsection
