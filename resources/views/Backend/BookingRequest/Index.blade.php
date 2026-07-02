@@ -19,6 +19,7 @@
                             <th>Pickup Location</th>
                             <th>Drop Location</th>
                             <th>Shifting Date</th>
+                            <th>Request On</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -60,6 +61,11 @@
                 {
                     data: 'shifting_date',
                     name: 'shifting_date'
+                },
+                {
+                    data: 'created_at_formatted',
+                    name: 'created_at',
+                    orderable: true
                 },
                 {
                     data: 'status',

@@ -49,7 +49,10 @@ class BookingRequestController extends Controller
                     $viewBtn = '<a href="' . route('booking-request.show', $req->id) . '" class="btn icon-btn-sm btn-light-info" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="View Request" data-drawer="true" data-drawer-title="Request Details"><i class="ri-eye-line"></i></a>';
                     return '<div class="hstack gap-2 fs-15">' . $viewBtn . '</div>';
                 })
-                ->rawColumns(['customer_name', 'shifting_date', 'status', 'action', 'pickup_location', 'drop_location'])
+                ->addColumn('created_at_formatted', function ($req) {
+                    return '<div>' . $req->created_at->format('d M Y') . '</div><span class="text-muted fs-11">' . $req->created_at->format('h:i A') . '</span>';
+                })
+                ->rawColumns(['customer_name', 'shifting_date', 'status', 'action', 'pickup_location', 'drop_location', 'created_at_formatted'])
                 ->make(true);
         }
 
