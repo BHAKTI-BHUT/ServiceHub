@@ -29,8 +29,11 @@ class BookingRequestController extends Controller
                     $date = $req->shifting_date ? date('d M Y', strtotime($req->shifting_date)) : '—';
                     return '<div>' . $date . '</div><span class="text-muted fs-11">' . $time . '</span>';
                 })
-                ->editColumn('estimated_amount', function ($req) {
-                    return '₹' . number_format($req->estimated_amount, 2);
+                ->editColumn('pickup_location', function ($req) {
+                    return '<div class="text-wrap" style="min-width: 200px; max-width: 320px; white-space: normal;">' . e($req->pickup_location) . '</div>';
+                })
+                ->editColumn('drop_location', function ($req) {
+                    return '<div class="text-wrap" style="min-width: 200px; max-width: 320px; white-space: normal;">' . e($req->drop_location) . '</div>';
                 })
                 ->addColumn('status', function ($req) {
                     if ($req->status === 'pending') {
@@ -46,7 +49,7 @@ class BookingRequestController extends Controller
                     $viewBtn = '<a href="' . route('booking-request.show', $req->id) . '" class="btn icon-btn-sm btn-light-info" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="View Request" data-drawer="true" data-drawer-title="Request Details"><i class="ri-eye-line"></i></a>';
                     return '<div class="hstack gap-2 fs-15">' . $viewBtn . '</div>';
                 })
-                ->rawColumns(['customer_name', 'shifting_date', 'status', 'action'])
+                ->rawColumns(['customer_name', 'shifting_date', 'status', 'action', 'pickup_location', 'drop_location'])
                 ->make(true);
         }
 
@@ -89,7 +92,7 @@ class BookingRequestController extends Controller
             'drop_longitude' => $bookingRequest->drop_longitude,
             'shifting_date' => $bookingRequest->shifting_date,
             'shifting_time' => $bookingRequest->shifting_time,
-            'amount' => $bookingRequest->estimated_amount,
+            'amount' => $bookingRequest->estimated_amount ?? 0.00,
             'status' => 'confirmed', // approved requests are confirmed bookings
         ]);
 

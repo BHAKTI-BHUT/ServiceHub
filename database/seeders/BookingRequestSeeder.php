@@ -64,7 +64,7 @@ class BookingRequestSeeder extends Seeder
                 'drop_longitude' => 72.0 + (rand(0, 1000) / 100.0),
                 'shifting_date' => $shiftingDate,
                 'shifting_time' => $shiftingTime,
-                'estimated_amount' => rand(3000, 18000) . '.00',
+                'estimated_amount' => '0.00',
                 'status' => $statuses[$i % count($statuses)],
                 'created_at' => now(),
                 'updated_at' => now(),

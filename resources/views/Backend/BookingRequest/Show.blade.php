@@ -68,13 +68,13 @@
             </div>
         </div>
 
-        <!-- Est Amount & Status -->
+        <!-- Status -->
         <div class="col-12 mt-3">
             <div class="card border border-primary shadow-none bg-primary bg-opacity-10 mb-0">
                 <div class="card-body p-3 d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-primary d-block fs-11">Estimated Amount</span>
-                        <h4 class="mb-0 text-primary fw-bold">₹{{ number_format($bookingRequest->estimated_amount, 2) }}</h4>
+                        <span class="text-primary d-block fs-11">Request Status</span>
+                        <h5 class="mb-0 text-primary fw-semibold">{{ ucfirst($bookingRequest->status) }}</h5>
                     </div>
                     <div>
                         @if ($bookingRequest->status === 'pending')

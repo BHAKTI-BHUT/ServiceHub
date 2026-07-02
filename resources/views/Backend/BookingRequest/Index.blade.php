@@ -16,10 +16,9 @@
                             <th>ID</th>
                             <th>Customer Name</th>
                             <th>Customer Mobile</th>
-                            <!-- <th>Pickup Location</th>
-                            <th>Drop Location</th> -->
+                            <th>Pickup Location</th>
+                            <th>Drop Location</th>
                             <th>Shifting Date</th>
-                            <th>Est. Amount</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -50,21 +49,17 @@
                     name: 'customer_mobile',
                     orderable: false
                 },
-                    // {
-                    //     data: 'pickup_location',
-                    //     name: 'pickup_location'
-                    // },
-                    // {
-                    //     data: 'drop_location',
-                    //     name: 'drop_location'
-                    // },
+                {
+                    data: 'pickup_location',
+                    name: 'pickup_location'
+                },
+                {
+                    data: 'drop_location',
+                    name: 'drop_location'
+                },
                 {
                     data: 'shifting_date',
                     name: 'shifting_date'
-                },
-                {
-                    data: 'estimated_amount',
-                    name: 'estimated_amount'
                 },
                 {
                     data: 'status',

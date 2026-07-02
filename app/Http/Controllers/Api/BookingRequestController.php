@@ -51,14 +51,6 @@ class BookingRequestController extends Controller
             ], 422);
         }
 
-        // Calculate estimated amount only if lat/lng are provided
-        $estimatedAmount = $this->calculateEstimatedAmount(
-            $request->pickup_latitude,
-            $request->pickup_longitude,
-            $request->drop_latitude,
-            $request->drop_longitude
-        );
-
         $bookingRequest = $request->user()->bookingRequests()->create([
             'phone_number'      => $request->phone_number ?? $request->user()->mobile,
             'pickup_location'   => $request->pickup_location,
@@ -69,7 +61,6 @@ class BookingRequestController extends Controller
             'drop_longitude'    => $request->drop_longitude,
             'shifting_date'     => $request->shifting_date,
             'shifting_time'     => $request->shifting_time,
-            'estimated_amount'  => $estimatedAmount,
             'status'            => 'pending',
         ]);
 
@@ -77,36 +68,6 @@ class BookingRequestController extends Controller
             'success'         => true,
             'message'         => 'Booking request submitted successfully!',
             'booking_request' => $bookingRequest,
-            'estimated_amount'=> '₹' . number_format($estimatedAmount, 2),
         ], 201);
-    }
-
-    /**
-     * Helper to calculate estimated amount using Haversine formula
-     */
-    private function calculateEstimatedAmount($lat1, $lon1, $lat2, $lon2)
-    {
-        if (is_null($lat1) || is_null($lon1) || is_null($lat2) || is_null($lon2)) {
-            return 500.00;
-        }
-
-        $earthRadius = 6371; // earth radius in km
-
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
-
-        $a = sin($dLat / 2) * sin($dLat / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($dLon / 2) * sin($dLon / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        $distance = $earthRadius * $c; // distance in km
-
-        // Formula: Base fare of 500 + 50 per KM
-        $baseFare = 500;
-        $perKmRate = 50;
-        $amount = $baseFare + ($distance * $perKmRate);
-
-        return round($amount, 2);
     }
 }
