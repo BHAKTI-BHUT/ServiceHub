@@ -29,7 +29,8 @@ class OtpService
         OtpVerification::where('mobile', $mobile)->update(['expires_at' => now()]);
 
         // Generate 6 digit OTP
-        $otpCode = str_pad((string)rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+        // TODO: Remove dummy OTP before production — replace with: str_pad((string)rand(100000, 999999), 6, '0', STR_PAD_LEFT)
+        $otpCode = '123456'; // Dummy OTP for testing
 
         $otp = OtpVerification::create([
             'mobile' => $mobile,

@@ -31,23 +31,27 @@ class BookingRequestController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'pickup_location' => 'required|string|max:255',
-            'drop_location' => 'required|string|max:255',
-            'pickup_latitude' => 'required|numeric',
-            'pickup_longitude' => 'required|numeric',
-            'drop_latitude' => 'required|numeric',
-            'drop_longitude' => 'required|numeric',
-            'shifting_date' => 'required|date|after_or_equal:today',
-            'shifting_time' => 'required|date_format:H:i',
+            'pickup_location'  => 'required|string|max:255',
+            'drop_location'    => 'required|string|max:255',
+            'phone_number'     => 'nullable|string|max:15',
+            'shifting_date'    => 'required|date|after_or_equal:today',
+            // shifting_time is optional (app may not show time picker)
+            'shifting_time'    => 'nullable|date_format:H:i',
+            // lat/lng are optional — used for distance-based price estimation if provided
+            'pickup_latitude'  => 'nullable|numeric',
+            'pickup_longitude' => 'nullable|numeric',
+            'drop_latitude'    => 'nullable|numeric',
+            'drop_longitude'   => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors()
             ], 422);
         }
 
+        // Calculate estimated amount only if lat/lng are provided
         $estimatedAmount = $this->calculateEstimatedAmount(
             $request->pickup_latitude,
             $request->pickup_longitude,
@@ -56,22 +60,24 @@ class BookingRequestController extends Controller
         );
 
         $bookingRequest = $request->user()->bookingRequests()->create([
-            'pickup_location' => $request->pickup_location,
-            'drop_location' => $request->drop_location,
-            'pickup_latitude' => $request->pickup_latitude,
-            'pickup_longitude' => $request->pickup_longitude,
-            'drop_latitude' => $request->drop_latitude,
-            'drop_longitude' => $request->drop_longitude,
-            'shifting_date' => $request->shifting_date,
-            'shifting_time' => $request->shifting_time,
-            'estimated_amount' => $estimatedAmount,
-            'status' => 'pending',
+            'phone_number'      => $request->phone_number ?? $request->user()->mobile,
+            'pickup_location'   => $request->pickup_location,
+            'drop_location'     => $request->drop_location,
+            'pickup_latitude'   => $request->pickup_latitude,
+            'pickup_longitude'  => $request->pickup_longitude,
+            'drop_latitude'     => $request->drop_latitude,
+            'drop_longitude'    => $request->drop_longitude,
+            'shifting_date'     => $request->shifting_date,
+            'shifting_time'     => $request->shifting_time,
+            'estimated_amount'  => $estimatedAmount,
+            'status'            => 'pending',
         ]);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Booking request submitted successfully!',
-            'booking_request' => $bookingRequest
+            'success'         => true,
+            'message'         => 'Booking request submitted successfully!',
+            'booking_request' => $bookingRequest,
+            'estimated_amount'=> '₹' . number_format($estimatedAmount, 2),
         ], 201);
     }
 

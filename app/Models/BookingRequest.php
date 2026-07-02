@@ -11,6 +11,7 @@ class BookingRequest extends Model
 
     protected $fillable = [
         'customer_id',
+        'phone_number',
         'pickup_location',
         'drop_location',
         'pickup_latitude',

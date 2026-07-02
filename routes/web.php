@@ -117,5 +117,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+
+Route::get('/run-migrations-temp', function () {
+    try {
+        // Sanctum migrations ko publish karein
+        \Illuminate\Support\Facades\Artisan::call('vendor:publish', [
+            '--tag' => 'sanctum-migrations',
+            '--force' => true
+        ]);
+        
+        // Database migration run karein
+        \Illuminate\Support\Facades\Artisan::call('migrate');
+        
+        return "Migrations ran successfully!<br><pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+});
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/Admin.php';

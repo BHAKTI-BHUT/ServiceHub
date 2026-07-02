@@ -722,7 +722,7 @@ $(document).ready(function () {
                 showToast('Could not calculate pricing. Please check the form fields.', 'danger');
             },
             complete: function () {
-                $('#calcSpinner').addClass('d-none');
+                $('#calcSpinner').addClass('d-none');  
                 $('#calcPriceBtn').prop('disabled', false);
             }
         });

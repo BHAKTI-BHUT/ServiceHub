@@ -13,6 +13,19 @@
             </div>
         </div>
 
+        {{-- Booking Contact Number (if different from login number) --}}
+        @if ($bookingRequest->phone_number)
+        <div class="col-12">
+            <div class="d-flex align-items-center gap-2 bg-light rounded px-3 py-2">
+                <i class="ri-smartphone-line text-primary fs-16"></i>
+                <div>
+                    <span class="text-muted d-block fs-11">Booking Contact Number</span>
+                    <span class="fw-semibold">{{ $bookingRequest->phone_number }}</span>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Shifting Details Section -->
         <div class="col-12 mt-3">
             <h6 class="text-uppercase fs-11 text-muted mb-2">Shifting Specifications</h6>
@@ -44,7 +57,10 @@
                             </div>
                             <div class="col-6">
                                 <span class="text-muted d-block fs-11">Shifting Time</span>
-                                <span class="fw-semibold"><i class="ri-time-line me-1 text-primary"></i>{{ date('h:i A', strtotime($bookingRequest->shifting_time)) }}</span>
+                                <span class="fw-semibold">
+                                    <i class="ri-time-line me-1 text-primary"></i>
+                                    {{ $bookingRequest->shifting_time ? date('h:i A', strtotime($bookingRequest->shifting_time)) : '—' }}
+                                </span>
                             </div>
                         </div>
                     </div>
