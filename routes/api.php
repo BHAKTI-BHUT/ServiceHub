@@ -20,8 +20,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/booking-requests', [App\Http\Controllers\Api\BookingRequestController::class, 'index']);
     Route::post('/booking-requests', [App\Http\Controllers\Api\BookingRequestController::class, 'store']);
 
-    // Bookings
+// Bookings
     Route::get('/bookings', [App\Http\Controllers\Api\BookingController::class, 'index']);
     Route::get('/bookings/{id}', [App\Http\Controllers\Api\BookingController::class, 'show']);
     Route::post('/bookings/{id}/cancel', [App\Http\Controllers\Api\BookingController::class, 'cancel']);
+    // New endpoints for estimating and creating bookings
+    Route::post('/bookings/estimate', [App\Http\Controllers\Api\BookingController::class, 'estimate']);
+    Route::post('/bookings', [App\Http\Controllers\Api\BookingController::class, 'store']);
+    // Add-ons
+    Route::get('/addons', [App\Http\Controllers\Api\AddOnController::class, 'index']);
+
 });

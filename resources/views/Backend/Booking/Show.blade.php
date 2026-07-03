@@ -232,7 +232,7 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Customer Details</h5>
-                </div>
+                </div> 
                 <div class="card-body">
                     @if ($booking->customer)
                         <div class="d-flex align-items-center gap-3 mb-3">
@@ -245,8 +245,8 @@
                         </div>
                         <div class="fs-12 d-flex flex-column gap-2 text-muted mt-3">
                             <div><strong class="text-dark">Email:</strong> {{ $booking->customer->email }}</div>
-                            <div><strong class="text-dark">City:</strong> {{ $booking->customer->city ?? 'N/A' }}</div>
-                            <div><strong class="text-dark">Address:</strong> {{ $booking->customer->address ?? 'N/A' }}</div>
+                            <!-- <div><strong class="text-dark">City:</strong> {{ $booking->customer->city ?? 'N/A' }}</div> -->
+                            <!-- <div><strong class="text-dark">Address:</strong> {{ $booking->customer->address ?? 'N/A' }}</div> -->
                         </div>
                     @else
                         <div class="text-muted">No customer linked.</div>

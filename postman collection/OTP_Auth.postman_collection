@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "servicehub-otp-auth-v1",
+    "_postman_id": "servicehub-otp-auth-v2",
     "name": "ServiceHub — OTP Auth + Booking API",
-    "description": "Complete API collection for ServiceHub Flutter App.\n\n**Auth Flow:**\n1. Check Mobile → if exists, OTP sent\n2. Register → if new user, OTP sent\n3. Verify OTP → get Bearer Token ← Token auto-saved as {{token}}\n4. Use Bearer Token for protected routes\n5. Logout → token revoked\n\n**Booking Flow (after login):**\n6. Submit Booking Request → Admin mein pending request aayegi\n7. Get My Requests → User ki sabhi requests\n\n**Base URL:** {{base_url}} = http://127.0.0.1:8000\n**OTP (Dummy):** 123456 (always)\n**Token:** auto-set after Verify OTP",
+    "description": "Complete API collection for ServiceHub Flutter App.\n\n**Auth Flow:**\n1. Check Mobile → if exists, OTP sent\n2. Register → if new user, OTP sent\n3. Verify OTP → get Bearer Token ← Token auto-saved as {{token}}\n4. Use Bearer Token for protected routes\n5. Logout → token revoked\n\n**Booking Request Flow (after login):**\n6. Submit Booking Request → Admin mein pending request aayegi\n7. Get My Requests → User ki sabhi requests\n\n**Booking Flow (after login):**\n8. Get Add-ons → Available add-on services ki list\n9. Estimate Price → Booking create karne se pehle price check karo\n10. Create Booking → Confirmed booking banao\n11. Get My Bookings → Sabhi bookings fetch karo\n12. Get Booking Detail → Kisi ek booking ki detail\n13. Cancel Booking → Booking cancel karo\n\n**Base URL:** {{base_url}} = http://127.0.0.1:8000\n**OTP (Dummy):** 123456 (always)\n**Token:** auto-set after Verify OTP",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -17,6 +17,12 @@
       "value": "",
       "type": "string",
       "description": "Bearer token — auto-filled after Verify OTP"
+    },
+    {
+      "key": "booking_id",
+      "value": "",
+      "type": "string",
+      "description": "Last created booking ID — auto-filled after Create Booking"
     }
   ],
   "item": [
@@ -389,7 +395,7 @@
       ]
     },
     {
-      "name": "7. Submit Booking Request — Packers & Movers (Protected)",
+      "name": "7. Submit Booking Request (Protected)",
       "event": [
         {
           "listen": "test",
@@ -405,19 +411,11 @@
               "    pm.expect(json).to.have.property('booking_request');",
               "});",
               "",
-              "pm.test('Status is pending', function () {",
-              "    var json = pm.response.json();",
-              "    pm.expect(json.booking_request.status).to.equal('pending');",
-              "});",
-              "",
               "var json = pm.response.json();",
               "if (json.success) {",
               "    console.log('Booking Request submitted!');",
-              "    console.log('Status:', json.booking_request.status);",
               "    console.log('Request ID:', json.booking_request.id);",
-              "    console.log('Pickup:', json.booking_request.pickup_location);",
-              "    console.log('Drop:', json.booking_request.drop_location);",
-              "    console.log('Admin panel check: /admin/booking-requests');",
+              "    console.log('Status:', json.booking_request.status);",
               "}"
             ],
             "type": "text/javascript"
@@ -441,69 +439,19 @@
           "host": ["{{base_url}}"],
           "path": ["api", "booking-requests"]
         },
-        "description": "Packers & Movers Booking Request submit karo.\n\nBearer Token required — Verify OTP ke baad token {{token}} mein auto-save hota hai.\n\nREQUIRED fields:\n- pickup_location: Pickup address (text)\n- drop_location: Drop address (text)\n- shifting_date: Format YYYY-MM-DD (aaj ya future)\n\nOPTIONAL fields:\n- phone_number: Contact number (agar login number se alag ho)\n- shifting_time: Format HH:MM (24-hour)\n- pickup_latitude / pickup_longitude: GPS coordinates\n- drop_latitude / drop_longitude: GPS coordinates\n\nAdmin mein check karo: /booking-request (Status: Pending)"
+        "description": "Packers & Movers Booking Request submit karo.\n\nBearer Token required.\n\nREQUIRED fields:\n- pickup_location\n- drop_location\n- shifting_date: YYYY-MM-DD\n\nOPTIONAL fields:\n- phone_number, shifting_time, GPS coordinates\n\nAdmin mein check karo: /booking-requests (Status: Pending)"
       },
       "response": [
         {
-          "name": "Request Submitted — With GPS",
+          "name": "Request Submitted",
           "originalRequest": {
             "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"phone_number\": \"9876543210\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200\n}"
-            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": { "raw": "{{base_url}}/api/booking-requests" }
           },
           "status": "Created",
           "code": 201,
-          "body": "{\n    \"success\": true,\n    \"message\": \"Booking request submitted successfully!\",\n    \"booking_request\": {\n        \"id\": 1,\n        \"customer_id\": 1,\n        \"phone_number\": \"9876543210\",\n        \"pickup_location\": \"Connaught Place, New Delhi\",\n        \"drop_location\": \"Sector 18, Noida\",\n        \"pickup_latitude\": 28.6315,\n        \"pickup_longitude\": 77.2167,\n        \"drop_latitude\": 28.57,\n        \"drop_longitude\": 77.32,\n        \"shifting_date\": \"2026-07-15\",\n        \"shifting_time\": \"10:00:00\",\n        \"status\": \"pending\",\n        \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n    }\n}"
-        },
-        {
-          "name": "Request Submitted — Text Only (No GPS)",
-          "originalRequest": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"pickup_location\": \"Lajpat Nagar, Delhi\",\n    \"drop_location\": \"Dwarka Sector 12, Delhi\",\n    \"shifting_date\": \"2026-07-20\"\n}"
-            },
-            "url": { "raw": "{{base_url}}/api/booking-requests" }
-          },
-          "status": "Created",
-          "code": 201,
-          "body": "{\n    \"success\": true,\n    \"message\": \"Booking request submitted successfully!\",\n    \"booking_request\": {\n        \"id\": 2,\n        \"customer_id\": 1,\n        \"phone_number\": \"9876543210\",\n        \"pickup_location\": \"Lajpat Nagar, Delhi\",\n        \"drop_location\": \"Dwarka Sector 12, Delhi\",\n        \"pickup_latitude\": null,\n        \"pickup_longitude\": null,\n        \"drop_latitude\": null,\n        \"drop_longitude\": null,\n        \"shifting_date\": \"2026-07-20\",\n        \"shifting_time\": null,\n        \"status\": \"pending\",\n        \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n    }\n}"
-        },
-        {
-          "name": "Validation Error (Missing Required Fields)",
-          "originalRequest": {
-            "method": "POST",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": { "mode": "raw", "raw": "{\n    \"pickup_location\": \"Delhi\"\n}" },
-            "url": { "raw": "{{base_url}}/api/booking-requests" }
-          },
-          "status": "Unprocessable Content",
-          "code": 422,
-          "body": "{\n    \"success\": false,\n    \"errors\": {\n        \"drop_location\": [\"The drop location field is required.\"],\n        \"shifting_date\": [\"The shifting date field is required.\"]\n    }\n}"
-        },
-        {
-          "name": "Unauthorized (No Token)",
-          "originalRequest": {
-            "method": "POST",
-            "url": { "raw": "{{base_url}}/api/booking-requests" }
-          },
-          "status": "Unauthorized",
-          "code": 401,
-          "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
+          "body": "{\n    \"success\": true,\n    \"message\": \"Booking request submitted successfully!\",\n    \"booking_request\": {\n        \"id\": 1,\n        \"status\": \"pending\",\n        \"pickup_location\": \"Connaught Place, New Delhi\",\n        \"drop_location\": \"Sector 18, Noida\",\n        \"shifting_date\": \"2026-07-15\",\n        \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n    }\n}"
         }
       ]
     },
@@ -555,7 +503,424 @@
           },
           "status": "OK",
           "code": 200,
-          "body": "{\n    \"success\": true,\n    \"booking_requests\": {\n        \"data\": [\n            {\n                \"id\": 1,\n                \"phone_number\": \"9876543210\",\n                \"pickup_location\": \"Connaught Place, New Delhi\",\n                \"drop_location\": \"Sector 18, Noida\",\n                \"pickup_latitude\": 28.6315,\n                \"pickup_longitude\": 77.2167,\n                \"drop_latitude\": 28.57,\n                \"drop_longitude\": 77.32,\n                \"shifting_date\": \"2026-07-15\",\n                \"shifting_time\": \"10:00:00\",\n                \"status\": \"pending\",\n                \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n            }\n        ],\n        \"total\": 1,\n        \"per_page\": 15,\n        \"current_page\": 1\n    }\n}"
+          "body": "{\n    \"success\": true,\n    \"booking_requests\": {\n        \"data\": [\n            {\n                \"id\": 1,\n                \"pickup_location\": \"Connaught Place, New Delhi\",\n                \"drop_location\": \"Sector 18, Noida\",\n                \"shifting_date\": \"2026-07-15\",\n                \"status\": \"pending\",\n                \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n            }\n        ],\n        \"total\": 1,\n        \"per_page\": 15,\n        \"current_page\": 1\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "9. Get Available Add-ons (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Add-ons list returned', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('data');",
+              "    pm.expect(json.data).to.be.an('array');",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "console.log('Available Add-ons:', json.data ? json.data.length : 0);",
+              "if (json.data && json.data.length > 0) {",
+              "    json.data.forEach(function(addon) {",
+              "        console.log(' - [' + addon.id + '] ' + addon.name + ': Rs.' + addon.price);",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/addons",
+          "host": ["{{base_url}}"],
+          "path": ["api", "addons"]
+        },
+        "description": "Available add-on services ki list fetch karo.\n\nBearer Token required.\n\nYe add-ons booking create karte waqt addon_ids[] mein pass karo.\n\nTip: Estimate ya Create Booking mein 'addon_ids': [1, 2] pass karo."
+      },
+      "response": [
+        {
+          "name": "Add-ons List",
+          "originalRequest": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/addons" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Packing Material\",\n            \"description\": \"High-quality packing boxes and bubble wrap\",\n            \"price\": 500,\n            \"is_active\": true\n        },\n        {\n            \"id\": 2,\n            \"name\": \"AC Handling\",\n            \"description\": \"Professional AC dismantling and installation\",\n            \"price\": 700,\n            \"is_active\": true\n        },\n        {\n            \"id\": 3,\n            \"name\": \"Heavy Furniture Assembly\",\n            \"description\": \"Dismantling and assembling of heavy furniture\",\n            \"price\": 1000,\n            \"is_active\": true\n        },\n        {\n            \"id\": 4,\n            \"name\": \"Cleaning Service\",\n            \"description\": \"Post-move cleaning of old or new home\",\n            \"price\": 800,\n            \"is_active\": true\n        }\n    ]\n}"
+        },
+        {
+          "name": "No Add-ons Available",
+          "originalRequest": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/addons" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"data\": []\n}"
+        }
+      ]
+    },
+    {
+      "name": "10. Estimate Booking Price (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Estimate returned', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('estimated_price');",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "console.log('Estimated Price: Rs.' + (json.estimated_price || 'N/A'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200,\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"addon_ids\": []\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/bookings/estimate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bookings", "estimate"]
+        },
+        "description": "Booking create karne se pehle price estimate karo.\n\nBearer Token required.\n\nREQUIRED:\n- pickup_location, drop_location\n\nOPTIONAL:\n- GPS coordinates (better estimate ke liye)\n- shifting_date, shifting_time\n- addon_ids: [1, 2, 3]\n\nHamesha estimate karo, phir create karo!"
+      },
+      "response": [
+        {
+          "name": "Estimate Success",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings/estimate" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"estimated_price\": 4500,\n    \"distance_km\": 18.5,\n    \"breakdown\": {\n        \"base_price\": 3000,\n        \"distance_charge\": 1200,\n        \"addons_total\": 0,\n        \"tax\": 300,\n        \"total\": 4500\n    }\n}"
+        },
+        {
+          "name": "Estimate with Add-ons",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n    \"pickup_location\": \"Delhi\",\n    \"drop_location\": \"Noida\",\n    \"addon_ids\": [1, 2]\n}" },
+            "url": { "raw": "{{base_url}}/api/bookings/estimate" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"estimated_price\": 6200,\n    \"breakdown\": {\n        \"base_price\": 3000,\n        \"distance_charge\": 1500,\n        \"addons_total\": 1200,\n        \"tax\": 500,\n        \"total\": 6200\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "11. Create Booking (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201 Created', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Booking created successfully', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json).to.have.property('booking');",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "if (json.success && json.booking) {",
+              "    pm.collectionVariables.set('booking_id', json.booking.id);",
+              "    console.log('Booking Created! ID:', json.booking.id);",
+              "    console.log('Booking Number:', json.booking.booking_number);",
+              "    console.log('Total Amount: Rs.' + json.booking.total_amount);",
+              "    console.log('Status:', json.booking.status);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"phone_number\": \"9876543210\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200,\n    \"addon_ids\": [],\n    \"notes\": \"Please handle fragile items carefully\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/bookings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bookings"]
+        },
+        "description": "Naya booking create karo (confirmed booking).\n\nBearer Token required.\n\nTip: Pehle /api/bookings/estimate se price check karo.\n\nREQUIRED:\n- pickup_location, drop_location, shifting_date\n\nOPTIONAL:\n- phone_number, shifting_time, GPS, addon_ids: [1,2], notes\n\nBooking ID automatically {{booking_id}} variable mein save hoga."
+      },
+      "response": [
+        {
+          "name": "Booking Created Successfully",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings" }
+          },
+          "status": "Created",
+          "code": 201,
+          "body": "{\n    \"success\": true,\n    \"message\": \"Booking created successfully!\",\n    \"booking\": {\n        \"id\": 1,\n        \"booking_number\": \"BK-2026-001\",\n        \"customer_id\": 1,\n        \"phone_number\": \"9876543210\",\n        \"pickup_location\": \"Connaught Place, New Delhi\",\n        \"drop_location\": \"Sector 18, Noida\",\n        \"shifting_date\": \"2026-07-15\",\n        \"shifting_time\": \"10:00:00\",\n        \"total_amount\": 4500,\n        \"status\": \"confirmed\",\n        \"notes\": \"Please handle fragile items carefully\",\n        \"addons\": [],\n        \"created_at\": \"2026-07-03T10:00:00.000000Z\"\n    }\n}"
+        },
+        {
+          "name": "Booking with Add-ons",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n    \"pickup_location\": \"Delhi\",\n    \"drop_location\": \"Noida\",\n    \"shifting_date\": \"2026-07-20\",\n    \"addon_ids\": [1, 2]\n}" },
+            "url": { "raw": "{{base_url}}/api/bookings" }
+          },
+          "status": "Created",
+          "code": 201,
+          "body": "{\n    \"success\": true,\n    \"booking\": {\n        \"id\": 2,\n        \"booking_number\": \"BK-2026-002\",\n        \"status\": \"confirmed\",\n        \"total_amount\": 6200,\n        \"addons\": [\n            { \"id\": 1, \"name\": \"Packing Material\", \"price\": 500 },\n            { \"id\": 2, \"name\": \"AC Handling\", \"price\": 700 }\n        ]\n    }\n}"
+        },
+        {
+          "name": "Validation Error",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n    \"pickup_location\": \"Delhi\"\n}" },
+            "url": { "raw": "{{base_url}}/api/bookings" }
+          },
+          "status": "Unprocessable Content",
+          "code": 422,
+          "body": "{\n    \"success\": false,\n    \"errors\": {\n        \"drop_location\": [\"The drop location field is required.\"],\n        \"shifting_date\": [\"The shifting date field is required.\"]\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "12. Get My Bookings (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Returns bookings list', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('data');",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "console.log('Total Bookings:', json.data ? json.data.length : 0);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/bookings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bookings"]
+        },
+        "description": "Logged-in user ke saare confirmed bookings fetch karo.\n\nBearer Token required.\n\nBooking Request se alag hai — ye woh bookings hain jo create ho chuki hain."
+      },
+      "response": [
+        {
+          "name": "My Bookings List",
+          "originalRequest": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"booking_number\": \"BK-2026-001\",\n            \"status\": \"confirmed\",\n            \"pickup_location\": \"Connaught Place, New Delhi\",\n            \"drop_location\": \"Sector 18, Noida\",\n            \"shifting_date\": \"2026-07-15\",\n            \"total_amount\": 4500,\n            \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n        }\n    ]\n}"
+        },
+        {
+          "name": "Unauthorized (No Token)",
+          "originalRequest": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/bookings" }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "13. Get Booking Detail by ID (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Booking detail returned', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('id');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/bookings/{{booking_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bookings", "{{booking_id}}"]
+        },
+        "description": "Kisi specific booking ki detail fetch karo by ID.\n\nBearer Token required.\n\n{{booking_id}} Create Booking ke baad auto-set hota hai.\nYa manually URL mein ID daalo: /api/bookings/1"
+      },
+      "response": [
+        {
+          "name": "Booking Detail",
+          "originalRequest": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings/1" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"id\": 1,\n    \"booking_number\": \"BK-2026-001\",\n    \"status\": \"confirmed\",\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00:00\",\n    \"total_amount\": 4500,\n    \"addons\": [],\n    \"vendor\": {\n        \"id\": 2,\n        \"name\": \"Sharma Packers\"\n    },\n    \"notes\": \"Handle with care\",\n    \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n}"
+        },
+        {
+          "name": "Booking Not Found",
+          "originalRequest": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings/999" }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "body": "{\n    \"success\": false,\n    \"message\": \"Booking not found.\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "14. Cancel Booking (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Booking cancelled', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.success).to.be.true;",
+              "});",
+              "",
+              "console.log('Booking cancelled successfully.');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"reason\": \"Change of plans\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bookings", "{{booking_id}}", "cancel"]
+        },
+        "description": "Kisi booking ko cancel karo.\n\nBearer Token required.\n\n{{booking_id}} variable use hoga.\nYa manually URL mein ID daalo: /api/bookings/1/cancel\n\nOptional: reason field mein cancellation reason de sakte ho."
+      },
+      "response": [
+        {
+          "name": "Booking Cancelled",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n    \"reason\": \"Change of plans\"\n}" },
+            "url": { "raw": "{{base_url}}/api/bookings/1/cancel" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"message\": \"Booking cancelled successfully.\"\n}"
+        },
+        {
+          "name": "Cannot Cancel (Already Completed/Cancelled)",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings/1/cancel" }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n    \"success\": false,\n    \"message\": \"This booking cannot be cancelled.\"\n}"
+        },
+        {
+          "name": "Unauthorized (No Token)",
+          "originalRequest": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/bookings/1/cancel" }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
         }
       ]
     }

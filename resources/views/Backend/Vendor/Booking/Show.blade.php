@@ -230,8 +230,8 @@
                             </div>
                         </div>
                         <div class="fs-12 d-flex flex-column gap-2 text-muted mt-3">
-                            <div><strong class="text-dark">Email:</strong> {{ $booking->customer->email }}</div>
-                            <div><strong class="text-dark">City:</strong> {{ $booking->customer->city ?? 'N/A' }}</div>
+                           <div><strong class="text-dark">City:</strong> {{ $booking->customer->city ?? 'N/A' }}</div>
+                             <div><strong class="text-dark">Email:</strong> {{ $booking->customer->email }}</div>
                             <div><strong class="text-dark">Address:</strong> {{ $booking->customer->address ?? 'N/A' }}</div>
                         </div>
                     @else
