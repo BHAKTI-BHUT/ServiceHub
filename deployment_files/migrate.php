@@ -1,8 +1,7 @@
 <?php
 // ============================================
-// ServiceHub - Run Migration
+// ServiceHub - Programmatic Migration Runner
 // URL: /admin/migrate.php?key=servicehub2024
-// DELETE THIS FILE AFTER USE!
 // ============================================
 
 $secret = 'servicehub2024';
@@ -10,14 +9,27 @@ if (!isset($_GET['key']) || $_GET['key'] !== $secret) {
     die('<h2 style="color:red;font-family:sans-serif;">❌ Access Denied. Add ?key=servicehub2024</h2>');
 }
 
-$laravelPath = '/home/u466475909/domains/bhandaripackersandmovers.in/ServiceHub';
-$phpBin = PHP_BINARY ?: 'php';
+define('LARAVEL_START', microtime(true));
 
-$cmd = "cd " . escapeshellarg($laravelPath) . " && $phpBin artisan migrate --force 2>&1";
-$output = shell_exec($cmd);
+// Autoload & Bootstrap
+require __DIR__.'/../../ServiceHub/vendor/autoload.php';
+$app = require_once __DIR__.'/../../ServiceHub/bootstrap/app.php';
+
+// Instantiate kernel to handle console commands programmatically
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 
 echo "<pre style='background:#0f172a;color:#86efac;padding:20px;font-family:monospace;line-height:1.6;'>";
-echo "Command: php artisan migrate --force\n\n";
-echo htmlspecialchars($output ?: '(no output)');
+echo "Command: php artisan migrate --force (Programmatic)\n";
+echo "--------------------------------------------------\n";
+
+try {
+    $status = $kernel->call('migrate', ['--force' => true]);
+    echo "Exit Code: " . $status . "\n\n";
+    echo "Output:\n" . $kernel->output();
+} catch (\Exception $e) {
+    echo "❌ Error occurred: " . $e->getMessage() . "\n";
+    echo $e->getTraceAsString();
+}
+
 echo "</pre>";
 ?>
