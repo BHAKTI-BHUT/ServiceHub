@@ -87,22 +87,29 @@ class BookingController extends Controller
      */
     public function estimate(Request $request)
     {
-        // Validate request similar to store validation
+        // For estimation, only location, date, and shifting info are required.
+        // Contact details and customer_id are NOT needed just to calculate a price.
         $validated = $request->validate([
-            'customer_id' => 'required|exists:users,id',
-            'pickup_location' => 'required|string',
-            'drop_location' => 'required|string',
-            'pickup_latitude' => 'required|numeric',
-            'pickup_longitude' => 'required|numeric',
-            'drop_latitude' => 'required|numeric',
-            'drop_longitude' => 'required|numeric',
-            'pickup_contact_name' => 'required|string',
-            'pickup_contact_mobile' => 'required|string',
-            'drop_contact_name' => 'required|string',
-            'drop_contact_mobile' => 'required|string',
-            'shifting_date' => 'required|date',
-            'shifting_time' => 'required|string',
-            // other fields as needed
+            'customer_id'           => 'nullable|exists:users,id',
+            'pickup_location'       => 'required|string',
+            'drop_location'         => 'required|string',
+            'pickup_latitude'       => 'required|numeric',
+            'pickup_longitude'      => 'required|numeric',
+            'drop_latitude'         => 'required|numeric',
+            'drop_longitude'        => 'required|numeric',
+            'pickup_contact_name'   => 'nullable|string',
+            'pickup_contact_mobile' => 'nullable|string',
+            'drop_contact_name'     => 'nullable|string',
+            'drop_contact_mobile'   => 'nullable|string',
+            'shifting_date'         => 'required|date',
+            'shifting_time'         => 'nullable|string',
+            // Optional: items and add-on IDs if passed by the app
+            'items'                 => 'nullable|array',
+            'items.*.id'            => 'required_with:items|exists:items,id',
+            'items.*.quantity'      => 'required_with:items|integer|min:1',
+            'addon_ids'             => 'nullable|array',
+            'addon_ids.*'           => 'exists:add_ons,id',
+            'floors'                => 'nullable|integer|min:0',
         ]);
 
         // Use the same pricing engine logic as backend store
