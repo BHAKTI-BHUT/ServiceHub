@@ -16,9 +16,14 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+    // Items (for user to browse and select before booking)
+    Route::get('/items', [App\Http\Controllers\Api\ItemController::class, 'index']);
+
     // Booking Requests
     Route::get('/booking-requests', [App\Http\Controllers\Api\BookingRequestController::class, 'index']);
     Route::post('/booking-requests', [App\Http\Controllers\Api\BookingRequestController::class, 'store']);
+    // View a single booking request + admin-created booking details linked to it
+    Route::get('/booking-requests/{id}', [App\Http\Controllers\Api\BookingRequestController::class, 'show']);
 
 // Bookings
     Route::get('/bookings', [App\Http\Controllers\Api\BookingController::class, 'index']);

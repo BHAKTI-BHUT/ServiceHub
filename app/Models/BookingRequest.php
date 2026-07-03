@@ -31,4 +31,14 @@ class BookingRequest extends Model
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
+
+    /**
+     * Get the booking created by admin from this request.
+     * When admin fills the form and creates a booking linked to this request,
+     * the app uses this relationship to show the user their full booking details.
+     */
+    public function booking()
+    {
+        return $this->hasOne(Booking::class, 'booking_request_id');
+    }
 }

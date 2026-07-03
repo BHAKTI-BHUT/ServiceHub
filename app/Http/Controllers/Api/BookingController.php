@@ -128,57 +128,66 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate request (same rules as estimate)
+        // customer_id always comes from the authenticated user — never from the request body
+        $customerId = $request->user()->id;
+
         $validated = $request->validate([
-            'customer_id' => 'required|exists:users,id',
-            'pickup_location' => 'required|string',
-            'drop_location' => 'required|string',
-            'pickup_latitude' => 'required|numeric',
-            'pickup_longitude' => 'required|numeric',
-            'drop_latitude' => 'required|numeric',
-            'drop_longitude' => 'required|numeric',
-            'pickup_contact_name' => 'required|string',
-            'pickup_contact_mobile' => 'required|string',
-            'drop_contact_name' => 'required|string',
-            'drop_contact_mobile' => 'required|string',
-            'shifting_date' => 'required|date',
-            'shifting_time' => 'required|string',
-            // additional optional fields can be added here
+            'pickup_location'       => 'required|string',
+            'drop_location'         => 'required|string',
+            'pickup_latitude'       => 'required|numeric',
+            'pickup_longitude'      => 'required|numeric',
+            'drop_latitude'         => 'required|numeric',
+            'drop_longitude'        => 'required|numeric',
+            'pickup_contact_name'   => 'nullable|string',
+            'pickup_contact_mobile' => 'nullable|string',
+            'drop_contact_name'     => 'nullable|string',
+            'drop_contact_mobile'   => 'nullable|string',
+            'shifting_date'         => 'required|date',
+            'shifting_time'         => 'nullable|string',
+            'floors'                => 'nullable|integer|min:0',
+            // Items selected by user (from /api/items)
+            'items'                 => 'nullable|array',
+            'items.*.id'            => 'required_with:items|exists:items,id',
+            'items.*.quantity'      => 'required_with:items|integer|min:1',
+            // Add-ons selected by user (from /api/addons)
+            'addon_ids'             => 'nullable|array',
+            'addon_ids.*'           => 'exists:add_ons,id',
         ]);
+
+        $validated['customer_id'] = $customerId;
 
         $pricingEngine = new \App\Services\PricingEngine();
         $quote = $pricingEngine->calculateQuote($validated);
 
-        // Determine extra charges (loading/unloading/packing/labour) – placeholder values
-        $loadingCharge = $quote['loading_charge'] ?? 0;
+        $loadingCharge   = $quote['loading_charge']   ?? 0;
         $unloadingCharge = $quote['unloading_charge'] ?? 0;
-        $packingCharge = $quote['packing_charge'] ?? 0;
-        $labourCharge = $quote['labour_charge'] ?? 0;
+        $packingCharge   = $quote['packing_charge']   ?? 0;
+        $labourCharge    = $quote['labour_charge']    ?? 0;
 
-        $extraChargesTotal = $loadingCharge + $unloadingCharge + $packingCharge + $labourCharge;
-        $grandTotal = $quote['total_amount'] + $extraChargesTotal;
-        $vendorCommissionPct = 15; // could be configurable
+        $extraChargesTotal      = $loadingCharge + $unloadingCharge + $packingCharge + $labourCharge;
+        $grandTotal             = $quote['total_amount'] + $extraChargesTotal;
+        $vendorCommissionPct    = 15;
         $vendorCommissionAmount = round($grandTotal * ($vendorCommissionPct / 100), 2);
-        $advanceAmount = $quote['advance_amount'] ?? round($grandTotal * 0.20, 2);
+        $advanceAmount          = $quote['advance_amount'] ?? round($grandTotal * 0.20, 2);
 
         \DB::beginTransaction();
         try {
             $booking = \App\Models\Booking::create([
-                'customer_id' => $validated['customer_id'],
-                'pickup_location' => $validated['pickup_location'],
-                'drop_location' => $validated['drop_location'],
-                'pickup_latitude' => $validated['pickup_latitude'],
-                'pickup_longitude' => $validated['pickup_longitude'],
-                'drop_latitude' => $validated['drop_latitude'],
-                'drop_longitude' => $validated['drop_longitude'],
-                'pickup_contact_name' => $validated['pickup_contact_name'],
-                'pickup_contact_mobile' => $validated['pickup_contact_mobile'],
-                'drop_contact_name' => $validated['drop_contact_name'],
-                'drop_contact_mobile' => $validated['drop_contact_mobile'],
-                'shifting_date' => $validated['shifting_date'],
-                'shifting_time' => $validated['shifting_time'],
-                // status handling – default pending
-                'status' => 'pending',
+                'customer_id'              => $validated['customer_id'],
+                'pickup_location'          => $validated['pickup_location'],
+                'drop_location'            => $validated['drop_location'],
+                'pickup_latitude'          => $validated['pickup_latitude'],
+                'pickup_longitude'         => $validated['pickup_longitude'],
+                'drop_latitude'            => $validated['drop_latitude'],
+                'drop_longitude'           => $validated['drop_longitude'],
+                'pickup_contact_name'      => $validated['pickup_contact_name'] ?? null,
+                'pickup_contact_mobile'    => $validated['pickup_contact_mobile'] ?? null,
+                'drop_contact_name'        => $validated['drop_contact_name'] ?? null,
+                'drop_contact_mobile'      => $validated['drop_contact_mobile'] ?? null,
+                'shifting_date'            => $validated['shifting_date'],
+                'shifting_time'            => $validated['shifting_time'] ?? null,
+                'floors'                   => $validated['floors'] ?? 0,
+                'status'                   => 'pending',
                 // PricingEngine output
                 'total_volume_score' => $quote['total_volume_score'] ?? null,
                 'category_id' => $quote['category_id'] ?? null,
@@ -205,22 +214,39 @@ class BookingController extends Controller
                 'vendor_settlement_amount' => $grandTotal - $vendorCommissionAmount,
             ]);
 
-            // Attach items if provided
-            if (!empty($quote['items_breakdown'])) {
-                foreach ($quote['items_breakdown'] as $itemData) {
-                    $booking->items()->attach($itemData['id'], [
-                        'quantity' => $itemData['quantity'],
-                        'calculated_volume_score' => $itemData['line_score'],
+            // Attach items from the request (user-selected items)
+            if (!empty($validated['items'])) {
+                foreach ($validated['items'] as $itemInput) {
+                    $lineScore = 0;
+                    // Try to find the line score from PricingEngine breakdown if available
+                    if (!empty($quote['items_breakdown'])) {
+                        foreach ($quote['items_breakdown'] as $breakdown) {
+                            if ($breakdown['id'] == $itemInput['id']) {
+                                $lineScore = $breakdown['line_score'] ?? 0;
+                                break;
+                            }
+                        }
+                    }
+                    $booking->items()->attach($itemInput['id'], [
+                        'quantity'                => $itemInput['quantity'],
+                        'calculated_volume_score' => $lineScore,
                     ]);
                 }
             }
 
-            // Attach add‑ons if provided
-            if (!empty($quote['addons_breakdown'])) {
-                foreach ($quote['addons_breakdown'] as $addonData) {
-                    $booking->addOns()->attach($addonData['id'], [
-                        'price' => $addonData['price'],
-                    ]);
+            // Attach add-ons selected by user
+            if (!empty($validated['addon_ids'])) {
+                foreach ($validated['addon_ids'] as $addonId) {
+                    $addonPrice = 0;
+                    if (!empty($quote['addons_breakdown'])) {
+                        foreach ($quote['addons_breakdown'] as $addonData) {
+                            if ($addonData['id'] == $addonId) {
+                                $addonPrice = $addonData['price'] ?? 0;
+                                break;
+                            }
+                        }
+                    }
+                    $booking->addOns()->attach($addonId, ['price' => $addonPrice]);
                 }
             }
 
