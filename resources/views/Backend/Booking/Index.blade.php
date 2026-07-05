@@ -78,6 +78,7 @@
                             <th>Customer Mobile</th>
                             <th>Shifting Date</th>
                             <th>Amount</th>
+                            <th>Reg. Fee</th>
                             <th>Vendor</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -137,6 +138,12 @@
                 { data: 'customer_mobile', name: 'customer_mobile', orderable: false },
                 { data: 'shifting_date',   name: 'shifting_date' },
                 { data: 'amount',          name: 'amount' },
+                {
+                    data: 'registration_payment_status',
+                    name: 'registration_payment_status',
+                    orderable: false,
+                    searchable: false
+                },
                 {
                     data: 'vendor_id',
                     name: 'vendor_id',

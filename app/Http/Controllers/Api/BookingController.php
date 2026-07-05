@@ -170,6 +170,31 @@ class BookingController extends Controller
         $vendorCommissionAmount = round($grandTotal * ($vendorCommissionPct / 100), 2);
         $advanceAmount          = $quote['advance_amount'] ?? round($grandTotal * 0.20, 2);
 
+        // Create Razorpay Order for Registration Charge (500 INR)
+        $keyId = config('services.razorpay.key_id');
+        $keySecret = config('services.razorpay.key_secret');
+        $registrationCharge = 500.00;
+        $razorpayOrderId = null;
+
+        if ($keyId && $keySecret) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::withBasicAuth($keyId, $keySecret)
+                    ->post('https://api.razorpay.com/v1/orders', [
+                        'amount' => (int) ($registrationCharge * 100), // 50000 paise
+                        'currency' => 'INR',
+                        'receipt' => 'reg_booking_' . time() . '_' . rand(100, 999),
+                    ]);
+
+                if ($response->successful()) {
+                    $razorpayOrderId = $response->json()['id'] ?? null;
+                } else {
+                    \Log::error('Razorpay Order Creation Failed: ' . $response->body());
+                }
+            } catch (\Exception $e) {
+                \Log::error('Razorpay Order Exception: ' . $e->getMessage());
+            }
+        }
+
         \DB::beginTransaction();
         try {
             $booking = \App\Models\Booking::create([
@@ -212,6 +237,10 @@ class BookingController extends Controller
                 // Vendor settlement
                 'vendor_commission_amount' => $vendorCommissionAmount,
                 'vendor_settlement_amount' => $grandTotal - $vendorCommissionAmount,
+                // Registration Payment fields
+                'registration_charge' => $registrationCharge,
+                'registration_payment_status' => 'pending',
+                'registration_order_id' => $razorpayOrderId,
             ]);
 
             // Attach items from the request (user-selected items)
@@ -260,9 +289,58 @@ class BookingController extends Controller
             'success' => true,
             'message' => 'Booking created successfully',
             'booking_id' => $booking->id,
+            'registration_order_id' => $booking->registration_order_id,
+            'registration_charge' => $booking->registration_charge,
             'quote' => $quote,
         ]);
     }
 
-    // Existing cancel method continues below
+    public function verifyRegistrationPayment(Request $request, $id)
+    {
+        $booking = $request->user()->bookings()->find($id);
+
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking not found.'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'razorpay_payment_id' => 'required|string',
+            'razorpay_order_id'   => 'required|string',
+            'razorpay_signature'  => 'required|string',
+        ]);
+
+        $keySecret = config('services.razorpay.key_secret');
+
+        // Verify Razorpay Signature
+        $expectedSignature = hash_hmac(
+            'sha256',
+            $validated['razorpay_order_id'] . '|' . $validated['razorpay_payment_id'],
+            $keySecret
+        );
+
+        if (hash_equals($expectedSignature, $validated['razorpay_signature'])) {
+            $booking->update([
+                'registration_payment_status' => 'paid',
+                'registration_payment_id'     => $validated['razorpay_payment_id'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration payment verified successfully.',
+                'booking' => $booking
+            ]);
+        }
+
+        $booking->update([
+            'registration_payment_status' => 'failed'
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid payment signature verification failed.'
+        ], 400);
+    }
 }

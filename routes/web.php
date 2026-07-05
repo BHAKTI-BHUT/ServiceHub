@@ -56,6 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{booking}/cancel', [BookingController::class, 'cancel'])->name('cancel');
         Route::post('/{booking}/complete', [BookingController::class, 'complete'])->name('complete');
         Route::post('/{booking}/assign-vendor', [BookingController::class, 'assignVendor'])->name('assignVendor');
+        Route::get('/{booking}/registration-invoice', [BookingController::class, 'registrationInvoice'])->name('registration-invoice');
     });
 
     // ── Vendor Booking Portal ──────────────────────────────

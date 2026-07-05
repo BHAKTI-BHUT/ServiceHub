@@ -262,6 +262,46 @@
                 </div>
             </div>
 
+            <!-- Registration Payment Card -->
+            <div class="card mb-4 border shadow-none">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0 fs-13"><i class="ri-secure-payment-line me-1 text-primary"></i>Registration Payment</h6>
+                    @php
+                        $regBadge = match($booking->registration_payment_status) {
+                            'paid' => 'bg-success-focus text-success',
+                            'failed' => 'bg-danger-focus text-danger',
+                            default => 'bg-warning-focus text-warning',
+                        };
+                    @endphp
+                    <span class="badge {{ $regBadge }}">{{ ucfirst($booking->registration_payment_status) }}</span>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="fs-12 text-muted">Registration Charge</span>
+                        <span class="fs-12 fw-semibold">₹{{ number_format($booking->registration_charge, 2) }}</span>
+                    </div>
+                    @if($booking->registration_order_id)
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="fs-12 text-muted">Razorpay Order ID</span>
+                        <span class="fs-12 fw-medium font-monospace">{{ $booking->registration_order_id }}</span>
+                    </div>
+                    @endif
+                    @if($booking->registration_payment_id)
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="fs-12 text-muted">Razorpay Payment ID</span>
+                        <span class="fs-12 fw-medium font-monospace">{{ $booking->registration_payment_id }}</span>
+                    </div>
+                    @endif
+                    @if($booking->registration_payment_status === 'paid')
+                    <div class="mt-3">
+                        <a href="{{ route('booking.registration-invoice', $booking->id) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="ri-file-download-line me-1"></i>Download Registration Invoice
+                        </a>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
             {{-- Extra Charges Breakdown (show only if any > 0) --}}
             @if ($booking->loading_charge > 0 || $booking->unloading_charge > 0 || $booking->packing_charge > 0 || $booking->labour_charge > 0)
             <div class="card mb-4 border shadow-none">

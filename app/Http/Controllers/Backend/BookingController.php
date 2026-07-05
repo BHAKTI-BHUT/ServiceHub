@@ -53,6 +53,14 @@ class BookingController extends Controller
                 ->addColumn('vendor_id', fn($booking) => $booking->vendor_id)
                 ->addColumn('vendor_name', fn($booking) => $booking->vendor?->name ?? '')
                 ->addColumn('vendor_acceptance_status', fn($booking) => $booking->vendor_acceptance_status)
+                ->addColumn('registration_payment_status', function ($booking) {
+                    switch ($booking->registration_payment_status) {
+                        case 'paid':    $badge = 'bg-success-focus text-success'; $label = 'Paid'; break;
+                        case 'failed':  $badge = 'bg-danger-focus text-danger'; $label = 'Failed'; break;
+                        default:        $badge = 'bg-warning-focus text-warning'; $label = 'Pending';
+                    }
+                    return '<span class="badge ' . $badge . '">' . $label . '</span>';
+                })
                 ->addColumn('action', function ($booking) {
                     $showBtn = '<a href="' . route('booking.show', $booking->id) . '" class="btn icon-btn-sm btn-light-info" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="View Details"><i class="ri-eye-line"></i></a>';
                     $editBtn = '<a href="' . route('booking.edit', $booking->id) . '" class="btn icon-btn-sm btn-light-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Edit"><i class="ri-pencil-line"></i></a>';
@@ -81,7 +89,7 @@ class BookingController extends Controller
                     $actions .= '</div>';
                     return $actions;
                 })
-                ->rawColumns(['customer_name', 'booking_number', 'shifting_date', 'status', 'action'])
+                ->rawColumns(['customer_name', 'booking_number', 'shifting_date', 'status', 'registration_payment_status', 'action'])
                 ->make(true);
         }
 
@@ -548,6 +556,10 @@ class BookingController extends Controller
      */
     public function assignVendor(Request $request, Booking $booking)
     {
+        if ($booking->registration_payment_status !== 'paid') {
+            return response()->json(['message' => 'Cannot assign vendor. Registration payment is pending.'], 400);
+        }
+
         $validator = Validator::make($request->all(), [
             'vendor_id' => 'nullable|exists:users,id',
         ]);
@@ -602,5 +614,20 @@ class BookingController extends Controller
             'vendor_name'              => $name,
             'vendor_acceptance_status' => $booking->vendor_acceptance_status,
         ]);
+    }
+
+    /**
+     * Display printable Registration Invoice.
+     */
+    public function registrationInvoice(Booking $booking)
+    {
+        $booking->load('customer');
+
+        if ($booking->registration_payment_status !== 'paid') {
+            return redirect()->route('booking.show', $booking->id)
+                ->with('error', 'Registration invoice is only available for paid bookings.');
+        }
+
+        return view('invoices.registration_pdf', compact('booking'));
     }
 }

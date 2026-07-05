@@ -59,7 +59,14 @@ class Booking extends Model
         'supervisor_id',
         'vendor_acceptance_status',
         'supervisor_acceptance_status',
+        
+        // Registration Charge Fields
+        'registration_charge',
+        'registration_payment_status',
+        'registration_payment_id',
+        'registration_order_id',
     ];
+
 
     protected static function boot()
     {

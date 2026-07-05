@@ -923,6 +923,65 @@
           "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
         }
       ]
+    },
+    {
+      "name": "15. Verify Registration Payment (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Payment verified successfully', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.success).to.be.true;",
+              "});",
+              "",
+              "console.log('Registration payment verified successfully.');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"razorpay_payment_id\": \"pay_P1x2y3z4w5v6u7\",\n    \"razorpay_order_id\": \"order_O1x2y3z4w5v6u7\",\n    \"razorpay_signature\": \"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/bookings/{{booking_id}}/verify-registration-payment",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bookings", "{{booking_id}}", "verify-registration-payment"]
+        },
+        "description": "Verify customer registration payment using Razorpay payment credentials."
+      },
+      "response": [
+        {
+          "name": "Verification Success",
+          "originalRequest": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"razorpay_payment_id\": \"pay_P1x2y3z4w5v6u7\",\n    \"razorpay_order_id\": \"order_O1x2y3z4w5v6u7\",\n    \"razorpay_signature\": \"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/bookings/1/verify-registration-payment" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"message\": \"Registration payment verified successfully.\",\n    \"booking\": {\n        \"id\": 1,\n        \"booking_number\": \"BK-2026-001\",\n        \"registration_payment_status\": \"paid\"\n    }\n}"
+        }
+      ]
     }
   ]
 }
