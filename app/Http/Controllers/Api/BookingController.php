@@ -9,6 +9,48 @@ use Illuminate\Http\Request;
 class BookingController extends Controller
 {
     /**
+     * Get metadata and configuration needed to initialize a booking.
+     */
+    public function initData()
+    {
+        $itemSizes = \App\Models\ItemSize::where('status', 'active')
+            ->with(['items' => function ($query) {
+                $query->where('status', 'active');
+            }])->get();
+
+        $addons = \App\Models\AddOn::where('status', 'active')->get();
+
+        $pricingSettings = \App\Models\PricingSetting::whereIn('key', [
+            'per_km_rate',
+            'per_floor_charge',
+            'weekend_surge_percentage',
+            'month_end_surge_percentage',
+            'peak_time_surge_percentage',
+            'peak_time_start',
+            'peak_time_end',
+            'advance_payment_percentage',
+        ])->get()->keyBy('key');
+
+        $pricingConfig = [
+            'per_km_rate' => (float) ($pricingSettings->get('per_km_rate')->value ?? 20),
+            'per_floor_charge' => (float) ($pricingSettings->get('per_floor_charge')->value ?? 150),
+            'weekend_surge_percentage' => (float) ($pricingSettings->get('weekend_surge_percentage')->value ?? 10),
+            'month_end_surge_percentage' => (float) ($pricingSettings->get('month_end_surge_percentage')->value ?? 15),
+            'peak_time_surge_percentage' => (float) ($pricingSettings->get('peak_time_surge_percentage')->value ?? 0),
+            'peak_time_start' => $pricingSettings->get('peak_time_start')->value ?? '20:00',
+            'peak_time_end' => $pricingSettings->get('peak_time_end')->value ?? '23:00',
+            'advance_payment_percentage' => (float) ($pricingSettings->get('advance_payment_percentage')->value ?? 20),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'item_sizes' => $itemSizes,
+            'addons' => $addons,
+            'pricing_config' => $pricingConfig
+        ]);
+    }
+
+    /**
      * Display booking history of the authenticated user.
      */
     public function index(Request $request)

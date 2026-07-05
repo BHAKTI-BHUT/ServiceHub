@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/booking-requests/{id}', [App\Http\Controllers\Api\BookingRequestController::class, 'show']);
 
 // Bookings
+    Route::get('/bookings/init', [App\Http\Controllers\Api\BookingController::class, 'initData']);
     Route::get('/bookings', [App\Http\Controllers\Api\BookingController::class, 'index']);
     Route::get('/bookings/{id}', [App\Http\Controllers\Api\BookingController::class, 'show']);
     Route::post('/bookings/{id}/cancel', [App\Http\Controllers\Api\BookingController::class, 'cancel']);

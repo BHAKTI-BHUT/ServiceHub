@@ -508,7 +508,7 @@
       ]
     },
     {
-      "name": "9. Get Available Add-ons (Protected)",
+      "name": "9. Get Booking Init Data (Protected)",
       "event": [
         {
           "listen": "test",
@@ -518,19 +518,13 @@
               "    pm.response.to.have.status(200);",
               "});",
               "",
-              "pm.test('Add-ons list returned', function () {",
+              "pm.test('Init data returned successfully', function () {",
               "    var json = pm.response.json();",
-              "    pm.expect(json).to.have.property('data');",
-              "    pm.expect(json.data).to.be.an('array');",
-              "});",
-              "",
-              "var json = pm.response.json();",
-              "console.log('Available Add-ons:', json.data ? json.data.length : 0);",
-              "if (json.data && json.data.length > 0) {",
-              "    json.data.forEach(function(addon) {",
-              "        console.log(' - [' + addon.id + '] ' + addon.name + ': Rs.' + addon.price);",
-              "    });",
-              "}"
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json).to.have.property('item_sizes');",
+              "    pm.expect(json).to.have.property('addons');",
+              "    pm.expect(json).to.have.property('pricing_config');",
+              "});"
             ],
             "type": "text/javascript"
           }
@@ -543,34 +537,23 @@
           { "key": "Authorization", "value": "Bearer {{token}}" }
         ],
         "url": {
-          "raw": "{{base_url}}/api/addons",
+          "raw": "{{base_url}}/api/bookings/init",
           "host": ["{{base_url}}"],
-          "path": ["api", "addons"]
+          "path": ["api", "bookings", "init"]
         },
-        "description": "Available add-on services ki list fetch karo.\n\nBearer Token required.\n\nYe add-ons booking create karte waqt addon_ids[] mein pass karo.\n\nTip: Estimate ya Create Booking mein 'addon_ids': [1, 2] pass karo."
+        "description": "Fetch all booking initialization data in a single API call (Items, Item Sizes, Add-ons, and Pricing Configuration)."
       },
       "response": [
         {
-          "name": "Add-ons List",
+          "name": "Init Data Success",
           "originalRequest": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/api/addons" }
+            "url": { "raw": "{{base_url}}/api/bookings/init" }
           },
           "status": "OK",
           "code": 200,
-          "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Packing Material\",\n            \"description\": \"High-quality packing boxes and bubble wrap\",\n            \"price\": 500,\n            \"is_active\": true\n        },\n        {\n            \"id\": 2,\n            \"name\": \"AC Handling\",\n            \"description\": \"Professional AC dismantling and installation\",\n            \"price\": 700,\n            \"is_active\": true\n        },\n        {\n            \"id\": 3,\n            \"name\": \"Heavy Furniture Assembly\",\n            \"description\": \"Dismantling and assembling of heavy furniture\",\n            \"price\": 1000,\n            \"is_active\": true\n        },\n        {\n            \"id\": 4,\n            \"name\": \"Cleaning Service\",\n            \"description\": \"Post-move cleaning of old or new home\",\n            \"price\": 800,\n            \"is_active\": true\n        }\n    ]\n}"
-        },
-        {
-          "name": "No Add-ons Available",
-          "originalRequest": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": { "raw": "{{base_url}}/api/addons" }
-          },
-          "status": "OK",
-          "code": 200,
-          "body": "{\n    \"success\": true,\n    \"data\": []\n}"
+          "body": "{\n    \"success\": true,\n    \"item_sizes\": [\n        {\n            \"id\": 1,\n            \"size_name\": \"Small\",\n            \"items\": [\n                { \"id\": 1, \"item_name\": \"Chair\", \"status\": \"active\" }\n            ]\n        }\n    ],\n    \"addons\": [\n        { \"id\": 1, \"addon_name\": \"Packing Material\", \"price\": 500 }\n    ],\n    \"pricing_config\": {\n        \"per_km_rate\": 20,\n        \"per_floor_charge\": 150,\n        \"weekend_surge_percentage\": 10,\n        \"month_end_surge_percentage\": 15,\n        \"peak_time_surge_percentage\": 0,\n        \"peak_time_start\": \"20:00\",\n        \"peak_time_end\": \"23:00\",\n        \"advance_payment_percentage\": 20\n    }\n}"
         }
       ]
     },
@@ -681,7 +664,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"phone_number\": \"9876543210\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200,\n    \"addon_ids\": [],\n    \"notes\": \"Please handle fragile items carefully\"\n}",
+          "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"phone_number\": \"9876543210\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200,\n    \"items\": [\n        {\n            \"id\": 1,\n            \"quantity\": 3\n        },\n        {\n            \"id\": 3,\n            \"quantity\": 1\n        }\n    ],\n    \"addon_ids\": [1, 2],\n    \"notes\": \"Please handle fragile items carefully\"\n}",
           "options": { "raw": { "language": "json" } }
         },
         "url": {
