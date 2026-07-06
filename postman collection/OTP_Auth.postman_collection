@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "servicehub-otp-auth-v2",
     "name": "ServiceHub — OTP Auth + Booking API",
-    "description": "Complete API collection for ServiceHub Flutter App.\n\n**Auth Flow:**\n1. Check Mobile → if exists, OTP sent\n2. Register → if new user, OTP sent\n3. Verify OTP → get Bearer Token ← Token auto-saved as {{token}}\n4. Use Bearer Token for protected routes\n5. Logout → token revoked\n\n**Booking Request Flow (after login):**\n6. Submit Booking Request → Admin mein pending request aayegi\n7. Get My Requests → User ki sabhi requests\n\n**Booking Flow (after login):**\n8. Get Add-ons → Available add-on services ki list\n9. Estimate Price → Booking create karne se pehle price check karo\n10. Create Booking → Confirmed booking banao\n11. Get My Bookings → Sabhi bookings fetch karo\n12. Get Booking Detail → Kisi ek booking ki detail\n13. Cancel Booking → Booking cancel karo\n\n**Base URL:** {{base_url}} = http://127.0.0.1:8000\n**OTP (Dummy):** 123456 (always)\n**Token:** auto-set after Verify OTP",
+    "description": "Complete API collection for ServiceHub Flutter App.\n\n**Auth Flow:**\n1. Check Mobile → if exists, OTP sent\n2. Register → if new user, OTP sent\n3. Verify OTP → get Bearer Token ← Token auto-saved as {{token}}\n4. Use Bearer Token for protected routes\n5. Logout → token revoked\n\n**Booking Request Flow (after login):**\n6. Submit Booking Request → Admin mein pending request aayegi\n7. Get My Requests → User ki sabhi requests\n\n**Booking Flow (after login):**\n8. Get Add-ons → Available add-on services ki list\n9. Estimate Price → Booking create karne se pehle price check karo\n10. Create Booking → Confirmed booking banao\n11. Get My Bookings → Sabhi bookings fetch karo\n12. Get Booking Detail → Kisi ek booking ki detail\n13. Cancel Booking → Booking cancel karo\n14. Verify Registration Payment → Verify payment for booking\n15. Get Assigned Vendor Details → Fetch assigned vendor/supervisor details\n\n**Base URL:** {{base_url}} = http://127.0.0.1:8000\n**OTP (Dummy):** 123456 (always)\n**Token:** auto-set after Verify OTP",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -963,6 +963,64 @@
           "status": "OK",
           "code": 200,
           "body": "{\n    \"success\": true,\n    \"message\": \"Registration payment verified successfully.\",\n    \"booking\": {\n        \"id\": 1,\n        \"booking_number\": \"BK-2026-001\",\n        \"registration_payment_status\": \"paid\"\n    }\n}"
+        }
+      ]
+    },
+    {
+      "name": "16. Get Assigned Vendor Details (Protected)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Vendor field exists', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('vendor');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Accept", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/bookings/{{booking_id}}/assigned-vendor",
+          "host": ["{{base_url}}"],
+          "path": ["api", "bookings", "{{booking_id}}", "assigned-vendor"]
+        },
+        "description": "Fetch vendor and supervisor details assigned to the booking."
+      },
+      "response": [
+        {
+          "name": "Success (Vendor Assigned)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings/1/assigned-vendor" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"booking_id\": 1,\n    \"booking_number\": \"SH-20260706-1234\",\n    \"vendor_acceptance_status\": \"accepted\",\n    \"vendor\": {\n        \"id\": 3,\n        \"name\": \"Vendor Name\",\n        \"email\": \"vendor@example.com\",\n        \"mobile\": \"9876543210\",\n        \"image\": null,\n        \"phone\": null\n    },\n    \"supervisor\": {\n        \"id\": 4,\n        \"name\": \"Supervisor Name\",\n        \"email\": \"supervisor@example.com\",\n        \"mobile\": \"9876543211\",\n        \"image\": null,\n        \"phone\": null\n    }\n}"
+        },
+        {
+          "name": "Success (No Vendor Assigned Yet)",
+          "originalRequest": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/bookings/1/assigned-vendor" }
+          },
+          "status": "OK",
+          "code": 200,
+          "body": "{\n    \"success\": true,\n    \"message\": \"No vendor assigned to this booking yet.\",\n    \"vendor\": null,\n    \"supervisor\": null\n}"
         }
       ]
     }

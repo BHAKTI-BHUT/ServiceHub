@@ -73,6 +73,7 @@ class BookingController extends Controller
     {
         $booking = $request->user()
             ->bookings()
+            ->with(['vendor:id,name,email,mobile,image,phone', 'supervisor:id,name,email,mobile,image,phone'])
             ->where('id', $id)
             ->first();
 
@@ -365,13 +366,21 @@ class BookingController extends Controller
 
         if (hash_equals($expectedSignature, $validated['razorpay_signature'])) {
             $booking->update([
+                'status'                      => 'confirmed',
+                'tracking_status'             => 'confirmed',
                 'registration_payment_status' => 'paid',
                 'registration_payment_id'     => $validated['razorpay_payment_id'],
             ]);
 
+            \App\Models\OrderTracking::create([
+                'booking_id' => $booking->id,
+                'status' => 'confirmed',
+                'notes' => 'Registration payment of Rs. ' . $booking->registration_charge . ' verified. Booking confirmed.',
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Registration payment verified successfully.',
+                'message' => 'Registration payment verified successfully. Booking status updated to confirmed.',
                 'booking' => $booking
             ]);
         }
@@ -384,5 +393,40 @@ class BookingController extends Controller
             'success' => false,
             'message' => 'Invalid payment signature verification failed.'
         ], 400);
+    }
+
+    /**
+     * Get the assigned vendor and supervisor details for a booking.
+     */
+    public function assignedVendor(Request $request, $id)
+    {
+        $booking = $request->user()->bookings()
+            ->with(['vendor:id,name,email,mobile,image,phone', 'supervisor:id,name,email,mobile,image,phone'])
+            ->find($id);
+
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking not found.'
+            ], 404);
+        }
+
+        if (!$booking->vendor_id) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No vendor assigned to this booking yet.',
+                'vendor' => null,
+                'supervisor' => null,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'booking_id' => $booking->id,
+            'booking_number' => $booking->booking_number,
+            'vendor_acceptance_status' => $booking->vendor_acceptance_status,
+            'vendor' => $booking->vendor,
+            'supervisor' => $booking->supervisor,
+        ]);
     }
 }

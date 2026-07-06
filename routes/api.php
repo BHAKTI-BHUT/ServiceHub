@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/init', [App\Http\Controllers\Api\BookingController::class, 'initData']);
     Route::get('/bookings', [App\Http\Controllers\Api\BookingController::class, 'index']);
     Route::get('/bookings/{id}', [App\Http\Controllers\Api\BookingController::class, 'show']);
+    Route::get('/bookings/{id}/assigned-vendor', [App\Http\Controllers\Api\BookingController::class, 'assignedVendor']);
     Route::post('/bookings/{id}/cancel', [App\Http\Controllers\Api\BookingController::class, 'cancel']);
     Route::post('/bookings/{id}/verify-registration-payment', [App\Http\Controllers\Api\BookingController::class, 'verifyRegistrationPayment']);
     // New endpoints for estimating and creating bookings
