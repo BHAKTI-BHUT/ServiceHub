@@ -119,21 +119,55 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::get('/run-migrations-temp', function () {
+Route::get('/run-migrate', function () {
     try {
-        // Sanctum migrations ko publish karein
-        \Illuminate\Support\Facades\Artisan::call('vendor:publish', [
-            '--tag' => 'sanctum-migrations',
-            '--force' => true
-        ]);
-        
-        // Database migration run karein
-        \Illuminate\Support\Facades\Artisan::call('migrate');
-        
-        return "Migrations ran successfully!<br><pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+
+        return "<h2>✅ Migrate Successful!</h2><pre>" . $output . "</pre>";
     } catch (\Exception $e) {
-        return "Error: " . $e->getMessage();
+        return "<h2>❌ Migrate Error</h2><pre>" . $e->getMessage() . "</pre>";
     }
+});
+
+Route::get('/run-optimize', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        $output = \Illuminate\Support\Facades\Artisan::output();
+
+        return "<h2>✅ Optimize Clear Successful!</h2><pre>" . $output . "</pre>";
+    } catch (\Exception $e) {
+        return "<h2>❌ Optimize Clear Error</h2><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
+Route::get('/run-seed', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+
+        return "<h2>✅ Seeding Successful!</h2><pre>" . $output . "</pre>";
+    } catch (\Exception $e) {
+        return "<h2>❌ Seeding Error</h2><pre>" . $e->getMessage() . "</pre>";
+    }
+});
+
+Route::get('/run-logs', function () {
+    $logFile = storage_path('logs/laravel.log');
+
+    if (!file_exists($logFile)) {
+        return "<h2>❌ No log file found</h2>";
+    }
+
+    // Last 200 lines dikhao (puri file nahi)
+    $lines = file($logFile);
+    $lastLines = array_slice($lines, -200);
+    $content = implode("", $lastLines);
+
+    return "<h2>📋 Laravel Logs (Last 200 lines)</h2>"
+         . "<pre style='background:#1e1e1e;color:#d4d4d4;padding:20px;overflow:auto;max-height:80vh;font-size:13px;'>"
+         . htmlspecialchars($content)
+         . "</pre>";
 });
 
 require __DIR__ . '/auth.php';

@@ -77,13 +77,20 @@ class BookingController extends Controller
                             </form>';
                     }
                     if ($booking->status !== 'completed' && $booking->status !== 'cancelled') {
-                        $actions .= '
-                            <form action="' . route('booking.complete', $booking->id) . '" method="POST" class="status-action-form" style="display:inline;">
-                                ' . csrf_field() . '
-                                <button type="submit" class="btn icon-btn-sm btn-light-success" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Complete Booking">
+                        if ($booking->registration_payment_status !== 'paid') {
+                            $actions .= '
+                                <button type="button" class="btn icon-btn-sm btn-light-secondary" disabled data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Reg. Fee Pending – Cannot Complete">
                                     <i class="ri-checkbox-circle-line"></i>
-                                </button>
-                            </form>';
+                                </button>';
+                        } else {
+                            $actions .= '
+                                <form action="' . route('booking.complete', $booking->id) . '" method="POST" class="status-action-form" style="display:inline;">
+                                    ' . csrf_field() . '
+                                    <button type="submit" class="btn icon-btn-sm btn-light-success" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Complete Booking">
+                                        <i class="ri-checkbox-circle-line"></i>
+                                    </button>
+                                </form>';
+                        }
                     }
 
                     $actions .= '</div>';
@@ -511,6 +518,14 @@ class BookingController extends Controller
      */
     public function complete(Booking $booking)
     {
+        // Registration Fee pending ho to complete nahi hoga
+        if ($booking->registration_payment_status !== 'paid') {
+            if (request()->ajax()) {
+                return response()->json(['message' => 'Cannot complete booking. Registration Fee is still pending.'], 400);
+            }
+            return redirect()->route('booking.index')->with('error', 'Cannot complete booking. Registration Fee is still pending.');
+        }
+
         $booking->update(['status' => 'completed', 'tracking_status' => 'completed']);
         if (request()->ajax()) {
             return response()->json(['message' => 'Booking marked as completed.']);
