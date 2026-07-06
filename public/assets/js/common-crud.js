@@ -118,11 +118,27 @@ $(document).ready(function () {
 
         // Recalculate column widths on window resize & sidebar toggle
         var resizeTimer;
+        var lastWidth = $(window).width();
         $(window).on('resize', function () {
+            var currentWidth = $(window).width();
+            if (currentWidth === lastWidth) {
+                return; // Skip if width didn't change (prevents scrollbar-induced resize loops)
+            }
+            lastWidth = currentWidth;
+
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(function () {
                 table.columns.adjust();
-                if (table.fixedColumns) { table.fixedColumns().relayout(); }
+                try {
+                    if (typeof table.fixedColumns === 'function' && table.fixedColumns()) {
+                        var fc = table.fixedColumns();
+                        if (typeof fc.relayout === 'function') {
+                            fc.relayout();
+                        }
+                    }
+                } catch (e) {
+                    console.warn(e);
+                }
             }, 250);
         });
 
@@ -130,7 +146,16 @@ $(document).ready(function () {
         $(document).on('click', '.sidebar-toggle, .hamburger-icon, [data-bs-toggle="collapse"]', function () {
             setTimeout(function () {
                 table.columns.adjust();
-                if (table.fixedColumns) { table.fixedColumns().relayout(); }
+                try {
+                    if (typeof table.fixedColumns === 'function' && table.fixedColumns()) {
+                        var fc = table.fixedColumns();
+                        if (typeof fc.relayout === 'function') {
+                            fc.relayout();
+                        }
+                    }
+                } catch (e) {
+                    console.warn(e);
+                }
             }, 350);
         });
 

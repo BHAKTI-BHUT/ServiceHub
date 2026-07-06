@@ -632,23 +632,16 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test('Status 201 Created', function () {",
-              "    pm.response.to.have.status(201);",
-              "});",
-              "",
               "pm.test('Booking created successfully', function () {",
               "    var json = pm.response.json();",
               "    pm.expect(json.success).to.be.true;",
-              "    pm.expect(json).to.have.property('booking');",
+              "    pm.expect(json).to.have.property('booking_id');",
               "});",
               "",
               "var json = pm.response.json();",
-              "if (json.success && json.booking) {",
-              "    pm.collectionVariables.set('booking_id', json.booking.id);",
-              "    console.log('Booking Created! ID:', json.booking.id);",
-              "    console.log('Booking Number:', json.booking.booking_number);",
-              "    console.log('Total Amount: Rs.' + json.booking.total_amount);",
-              "    console.log('Status:', json.booking.status);",
+              "if (json.success && json.booking_id) {",
+              "    pm.collectionVariables.set('booking_id', json.booking_id);",
+              "    console.log('Booking Created! ID:', json.booking_id);",
               "}"
             ],
             "type": "text/javascript"

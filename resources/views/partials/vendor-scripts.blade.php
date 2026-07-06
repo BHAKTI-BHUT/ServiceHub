@@ -10,5 +10,14 @@
 <script src="https://cdn.datatables.net/fixedcolumns/4.0.2/js/dataTables.fixedColumns.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="{{ asset('assets/libs/sweetalert2/sweetalert2.min.js') }}"></script>
-<script src="{{ asset('assets/js/common-crud.js') }}"></script>
+@php
+    $crudPath = public_path('assets/js/common-crud.js');
+    $version = '1.0.2';
+    if (file_exists($crudPath)) {
+        $version = filemtime($crudPath);
+    } elseif (file_exists(base_path('public_html/assets/js/common-crud.js'))) {
+        $version = filemtime(base_path('public_html/assets/js/common-crud.js'));
+    }
+@endphp
+<script src="{{ asset('assets/js/common-crud.js') }}?v={{ $version }}"></script>
 <script type="module" src="{{ asset('assets/js/app.js') }}"></script>
