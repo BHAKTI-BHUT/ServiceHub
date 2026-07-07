@@ -119,7 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::get('/run-migrate', function () {
+Route::get('/admin/run-migrate', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         $output = \Illuminate\Support\Facades\Artisan::output();
@@ -130,7 +130,7 @@ Route::get('/run-migrate', function () {
     }
 });
 
-Route::get('/run-optimize', function () {
+Route::get('/admin/run-optimize', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('optimize:clear');
         $output = \Illuminate\Support\Facades\Artisan::output();
@@ -141,7 +141,15 @@ Route::get('/run-optimize', function () {
     }
 });
 
-Route::get('/run-seed', function () {
+Route::get('/admin/run-optimize', function () {
+    return redirect('/run-optimize');
+});
+
+Route::get('/admin', function () {
+    return redirect()->route('dashboard');
+});
+
+Route::get('/admin/run-seed', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
         $output = \Illuminate\Support\Facades\Artisan::output();
@@ -152,7 +160,7 @@ Route::get('/run-seed', function () {
     }
 });
 
-Route::get('/run-logs', function () {
+Route::get('/admin/run-logs', function () {
     $logFile = storage_path('logs/laravel.log');
 
     if (!file_exists($logFile)) {

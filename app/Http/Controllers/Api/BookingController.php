@@ -271,7 +271,7 @@ class BookingController extends Controller
                 'drop_contact_name'        => $validated['drop_contact_name'] ?? null,
                 'drop_contact_mobile'      => $validated['drop_contact_mobile'] ?? null,
                 'shifting_date'            => $validated['shifting_date'],
-                'shifting_time'            => $validated['shifting_time'] ?? null,
+                'shifting_time'            => $validated['shifting_time'] ? date('H:i:s', strtotime($validated['shifting_time'])) : null,
                 'floors'                   => $validated['floors'] ?? 0,
                 'status'                   => 'pending',
                 // PricingEngine output
@@ -425,7 +425,7 @@ class BookingController extends Controller
                 'drop_contact_name'        => $validated['drop_contact_name'] ?? null,
                 'drop_contact_mobile'      => $validated['drop_contact_mobile'] ?? null,
                 'shifting_date'            => $validated['shifting_date'],
-                'shifting_time'            => $validated['shifting_time'] ?? null,
+                'shifting_time'            => $validated['shifting_time'] ? date('H:i:s', strtotime($validated['shifting_time'])) : null,
                 'floors'                   => $validated['floors'] ?? 0,
                 // PricingEngine output
                 'total_volume_score' => $quote['total_volume_score'] ?? null,

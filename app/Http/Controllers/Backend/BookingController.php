@@ -443,7 +443,7 @@ class BookingController extends Controller
                 'drop_contact_name'        => $request->drop_contact_name,
                 'drop_contact_mobile'      => $request->drop_contact_mobile,
                 'shifting_date'            => $request->shifting_date,
-                'shifting_time'            => $request->shifting_time,
+                'shifting_time'            => $request->shifting_time ? date('H:i:s', strtotime($request->shifting_time)) : null,
                 'floors'                   => $request->input('floors', 0),
                 'status'                   => $request->status,
                 'tracking_status'          => $request->tracking_status,
