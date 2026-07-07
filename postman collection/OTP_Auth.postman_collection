@@ -1465,6 +1465,44 @@
                 "description": "Fetch the dynamic registration fee set by the Admin in Pricing Settings."
             },
             "response": []
+        },
+        {
+            "name": "17. Edit Pending Booking",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"pickup_location\": \"Updated Location A\",\n    \"drop_location\": \"Updated Location B\",\n    \"pickup_latitude\": 28.7041,\n    \"pickup_longitude\": 77.1025,\n    \"drop_latitude\": 28.5355,\n    \"drop_longitude\": 77.391,\n    \"shifting_date\": \"2024-12-30\",\n    \"shifting_time\": \"10:00 AM\",\n    \"floors\": 3,\n    \"items\": [\n        {\n            \"id\": 1,\n            \"quantity\": 2\n        }\n    ]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/{{booking_id}}/update",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "{{booking_id}}",
+                        "update"
+                    ]
+                },
+                "description": "Update a pending booking before it gets confirmed by admin. Needs all fields just like creating a booking."
+            },
+            "response": []
         }
     ]
 }
