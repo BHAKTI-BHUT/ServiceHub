@@ -29,6 +29,7 @@ class BookingController extends Controller
             'peak_time_start',
             'peak_time_end',
             'advance_payment_percentage',
+            'registration_fee',
         ])->get()->keyBy('key');
 
         $pricingConfig = [
@@ -39,7 +40,8 @@ class BookingController extends Controller
             'peak_time_surge_percentage' => (float) ($pricingSettings->get('peak_time_surge_percentage')->value ?? 0),
             'peak_time_start' => $pricingSettings->get('peak_time_start')->value ?? '20:00',
             'peak_time_end' => $pricingSettings->get('peak_time_end')->value ?? '23:00',
-            'advance_payment_percentage' => (float) ($pricingSettings->get('advance_payment_percentage')->value ?? 20),
+            'advance_payment_percentage' => 0.0,
+            'registration_fee' => (float) ($pricingSettings->get('registration_fee')->value ?? 500),
         ];
 
         return response()->json([
@@ -47,6 +49,21 @@ class BookingController extends Controller
             'item_sizes' => $itemSizes,
             'addons' => $addons,
             'pricing_config' => $pricingConfig
+        ]);
+    }
+
+    /**
+     * Get just the dynamic registration fee amount.
+     */
+    public function getRegistrationFee()
+    {
+        $regFeeSetting = \App\Models\PricingSetting::where('key', 'registration_fee')->first();
+        $fee = (float) ($regFeeSetting->value ?? 500);
+
+        return response()->json([
+            'success' => true,
+            'registration_fee' => $fee,
+            'currency' => 'INR'
         ]);
     }
 
@@ -211,12 +228,13 @@ class BookingController extends Controller
         $grandTotal             = $quote['total_amount'] + $extraChargesTotal;
         $vendorCommissionPct    = 15;
         $vendorCommissionAmount = round($grandTotal * ($vendorCommissionPct / 100), 2);
-        $advanceAmount          = $quote['advance_amount'] ?? round($grandTotal * 0.20, 2);
+        $advanceAmount          = 0.00;
 
-        // Create Razorpay Order for Registration Charge (500 INR)
+        // Create Razorpay Order for Registration Charge (dynamic from settings)
         $keyId = config('services.razorpay.key_id');
         $keySecret = config('services.razorpay.key_secret');
-        $registrationCharge = 500.00;
+        $regFeeSetting = \App\Models\PricingSetting::where('key', 'registration_fee')->first();
+        $registrationCharge = (float) ($regFeeSetting->value ?? 500);
         $razorpayOrderId = null;
 
         if ($keyId && $keySecret) {
@@ -273,9 +291,9 @@ class BookingController extends Controller
                 'labour_charge' => $labourCharge,
                 'amount' => $grandTotal,
                 // Payment breakdown
-                'advance_amount' => $advanceAmount,
-                'remaining_amount' => $grandTotal - $advanceAmount,
-                'advance_payment_status' => 'pending',
+                'advance_amount' => 0.00,
+                'remaining_amount' => $grandTotal,
+                'advance_payment_status' => 'paid',
                 'remaining_payment_status' => 'pending',
                 // Vendor settlement
                 'vendor_commission_amount' => $vendorCommissionAmount,

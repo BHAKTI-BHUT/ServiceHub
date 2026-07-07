@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     <span class="fs-12 text-muted d-block mb-1">Total Revenue</span>
-                    <h4 class="fw-semibold mb-0 text-success">₹ --</h4>
+                    <h4 class="fw-semibold mb-0 text-success">₹{{ number_format($totalRevenue, 2) }}</h4>
                 </div>
             </div>
         </div>
@@ -25,8 +25,8 @@
                     <i class="ri-wallet-3-fill"></i>
                 </div>
                 <div>
-                    <span class="fs-12 text-muted d-block mb-1">Advance Collected</span>
-                    <h4 class="fw-semibold mb-0">₹ --</h4>
+                    <span class="fs-12 text-muted d-block mb-1">Registration Collected</span>
+                    <h4 class="fw-semibold mb-0">₹{{ number_format($registrationCollected, 2) }}</h4>
                 </div>
             </div>
         </div>
@@ -39,7 +39,7 @@
                 </div>
                 <div>
                     <span class="fs-12 text-muted d-block mb-1">Remaining Collected</span>
-                    <h4 class="fw-semibold mb-0">₹ --</h4>
+                    <h4 class="fw-semibold mb-0">₹{{ number_format($remainingCollected, 2) }}</h4>
                 </div>
             </div>
         </div>
@@ -52,7 +52,7 @@
                 </div>
                 <div>
                     <span class="fs-12 text-muted d-block mb-1">Pending Revenue</span>
-                    <h4 class="fw-semibold mb-0">₹ --</h4>
+                    <h4 class="fw-semibold mb-0">₹{{ number_format($pendingRevenue, 2) }}</h4>
                 </div>
             </div>
         </div>
@@ -69,10 +69,11 @@
                             <th>Booking No.</th>
                             <th>Customer</th>
                             <th>Total Amount (₹)</th>
-                            <th>Advance Paid (₹)</th>
+                            <th>Reg. Fee (₹)</th>
                             <th>Remaining (₹)</th>
                             <th>Payment Status</th>
                             <th>Date</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -90,10 +91,11 @@
             { data: 'booking_number', name: 'booking_number' },
             { data: 'customer_name', name: 'customer.name' },
             { data: 'amount', name: 'amount' },
-            { data: 'advance_amount', name: 'advance_amount' },
+            { data: 'registration_charge', name: 'registration_charge' },
             { data: 'remaining_amount', name: 'remaining_amount' },
             { data: 'payment_status_badge', name: 'payment_status', orderable: false, searchable: false },
-            { data: 'created_at', name: 'created_at' }
+            { data: 'created_at', name: 'created_at' },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
         ]);
         @if(session('success')) showToast('{{ session('success') }}'); @endif
     });

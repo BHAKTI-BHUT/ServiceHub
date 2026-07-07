@@ -228,9 +228,8 @@ class PricingEngine
             2
         );
 
-        $advancePercentage = $this->getSettingValue('advance_payment_percentage', 20);
-        $breakdown['advance_percentage'] = $advancePercentage;
-        $breakdown['advance_amount'] = round($breakdown['total_amount'] * ($advancePercentage / 100), 2);
+        $breakdown['advance_percentage'] = 0;
+        $breakdown['advance_amount'] = 0.00;
 
         return $breakdown;
     }

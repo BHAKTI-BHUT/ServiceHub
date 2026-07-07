@@ -23,7 +23,7 @@ class PricingController extends Controller
         $this->saveSetting('peak_time_end', $request->input('peak_time_end'));
         $this->saveSetting('per_km_rate', $request->input('per_km_charge'));
         $this->saveSetting('per_floor_charge', $request->input('per_floor_charge'));
-        $this->saveSetting('advance_payment_percentage', $request->input('advance_percent', $request->input('advance_amount')));
+        $this->saveSetting('registration_fee', $request->input('registration_fee', 500));
 
         return redirect()->route('admin.pricing')->with('success', 'Pricing settings saved successfully.');
     }

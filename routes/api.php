@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{id}/cancel', [App\Http\Controllers\Api\BookingController::class, 'cancel']);
     Route::post('/bookings/{id}/verify-registration-payment', [App\Http\Controllers\Api\BookingController::class, 'verifyRegistrationPayment']);
     // New endpoints for estimating and creating bookings
+    Route::get('/bookings/registration-fee', [App\Http\Controllers\Api\BookingController::class, 'getRegistrationFee']);
     Route::post('/bookings/estimate', [App\Http\Controllers\Api\BookingController::class, 'estimate']);
     Route::post('/bookings', [App\Http\Controllers\Api\BookingController::class, 'store']);
     // Add-ons

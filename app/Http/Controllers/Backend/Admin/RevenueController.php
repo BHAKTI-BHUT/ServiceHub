@@ -19,27 +19,49 @@ class RevenueController extends Controller
                 ->addColumn('payment_status_badge', function($row) {
                     if ($row->remaining_payment_status == 'paid') {
                         return '<span class="badge bg-success">Fully Paid</span>';
-                    } elseif ($row->advance_payment_status == 'paid') {
-                        return '<span class="badge bg-warning">Advance Paid</span>';
                     }
                     return '<span class="badge bg-danger">Unpaid</span>';
                 })
                 ->editColumn('amount', fn($row) => '₹' . number_format($row->amount, 2))
-                ->editColumn('advance_amount', fn($row) => '₹' . number_format($row->advance_amount, 2))
-                ->editColumn('remaining_amount', fn($row) => '₹' . number_format($row->remaining_amount, 2))
+                ->editColumn('registration_charge', fn($row) => '₹' . number_format($row->registration_charge, 2) . ' (' . ucfirst($row->registration_payment_status) . ')')
+                ->editColumn('remaining_amount', function($row) {
+                    if ($row->remaining_payment_status === 'paid') {
+                        return '₹0.00';
+                    }
+                    $defaultRegFee = \App\Models\PricingSetting::where('key', 'registration_fee')->value('value') ?? 500;
+                    $remaining = $row->amount - ($row->registration_charge ?? $defaultRegFee);
+                    return '₹' . number_format($remaining, 2);
+                })
                 ->editColumn('created_at', fn($row) => $row->created_at->format('d M, Y'))
-                ->rawColumns(['payment_status_badge'])
+                ->addColumn('action', function ($row) {
+                    $detailsUrl = route('admin.revenue.details', $row->id);
+                    $invoiceUrl = route('admin.revenue.invoice', $row->id);
+                    return '<a href="' . $detailsUrl . '" target="_blank" class="btn btn-sm btn-light-primary me-1" data-bs-toggle="tooltip" title="View Details"><i class="ri-eye-line"></i> Details</a>' .
+                           '<a href="' . $invoiceUrl . '" target="_blank" class="btn btn-sm btn-light-success" data-bs-toggle="tooltip" title="View & Print Tax Invoice"><i class="ri-file-list-3-line"></i> Invoice</a>';
+                })
+                ->rawColumns(['payment_status_badge', 'action'])
                 ->make(true);
         }
 
         // Summary Statistics (for cards)
-        $totalRevenue = Booking::where('remaining_payment_status', 'paid')->sum('amount');
-        $advanceCollected = Booking::where('advance_payment_status', 'paid')->sum('advance_amount');
+        $registrationCollected = Booking::where('registration_payment_status', 'paid')->sum('registration_charge');
         $remainingCollected = Booking::where('remaining_payment_status', 'paid')->sum('remaining_amount');
+        $totalRevenue = $remainingCollected + $registrationCollected;
         $pendingRevenue = Booking::where('remaining_payment_status', 'pending')->where('status', '!=', 'cancelled')->sum('remaining_amount');
 
         return view('Backend.Admin.Revenue.Index', compact(
-            'totalRevenue', 'advanceCollected', 'remainingCollected', 'pendingRevenue'
+            'totalRevenue', 'registrationCollected', 'remainingCollected', 'pendingRevenue'
         ));
+    }
+    public function details(Booking $booking)
+    {
+        $booking->load(['customer', 'items', 'addOns', 'category', 'vehicle']);
+        return view('Backend.Admin.Revenue.details', compact('booking'));
+    }
+
+    public function invoice(Booking $booking)
+    {
+        $booking->load(['customer', 'items', 'addOns', 'category', 'vehicle']);
+        return view('invoices.tax_invoice', compact('booking'));
     }
 }

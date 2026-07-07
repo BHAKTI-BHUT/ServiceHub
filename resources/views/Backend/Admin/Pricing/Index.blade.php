@@ -24,7 +24,7 @@
                         $monthEndSetting = $settings->get('month_end_surge_percentage');
                         $perKmSetting = $settings->get('per_km_rate');
                         $perFloorSetting = $settings->get('per_floor_charge');
-                        $advanceSetting = $settings->get('advance_payment_percentage');
+                        $regFeeSetting = $settings->get('registration_fee');
                     @endphp
 
                     <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
@@ -112,11 +112,12 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Advance Payment (%)</label>
+                            <label class="form-label">Registration Fee (₹)</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" name="advance_percent" value="{{ optional($advanceSetting)->value ?? '' }}" placeholder="e.g. 20" min="0" max="100">
-                                <span class="input-group-text">%</span>
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control" name="registration_fee" value="{{ optional($regFeeSetting)->value ?? '500' }}" placeholder="e.g. 500" min="0">
                             </div>
+                            <small class="text-muted">Amount charged as registration/booking confirmation fee.</small>
                         </div>
                     </div>
 

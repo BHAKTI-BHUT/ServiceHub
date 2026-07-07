@@ -49,6 +49,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Revenue
         Route::get('/revenue', [RevenueController::class, 'index'])->name('revenue');
+        Route::get('/revenue/invoice/{booking}', [RevenueController::class, 'invoice'])->name('revenue.invoice');
+        Route::get('/revenue/details/{booking}', [RevenueController::class, 'details'])->name('revenue.details');
 
         // Vehicles
         Route::get('/vehicles',              [VehicleController::class, 'index'])->name('vehicles');

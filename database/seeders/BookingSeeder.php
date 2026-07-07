@@ -81,34 +81,39 @@ class BookingSeeder extends Seeder
             $month_end_charges = (rand(0, 1) == 1) ? round($subtotal * 0.15, 2) : 0.00;
             
             $amount = $subtotal + $weekend_charges + $month_end_charges;
-            $advance_amount = round($amount * 0.20, 2);
-            $remaining_amount = $amount - $advance_amount;
+            $advance_amount = 0.00;
+            $remaining_amount = $amount;
 
             // Vendor Settlement
             $vendor_commission_amount = round($amount * 0.15, 2);
             $vendor_settlement_amount = $amount - $vendor_commission_amount;
 
-            // Tracking statuses
+            // Tracking and Payment statuses
             if ($status === 'completed') {
                 $tracking_status = 'completed';
                 $advance_payment_status = 'paid';
                 $remaining_payment_status = 'paid';
+                $registration_payment_status = 'paid';
             } elseif ($status === 'in_progress') {
                 $tracking_status = 'in_transit';
                 $advance_payment_status = 'paid';
                 $remaining_payment_status = 'pending';
+                $registration_payment_status = 'paid';
             } elseif ($status === 'confirmed') {
                 $tracking_status = 'confirmed';
                 $advance_payment_status = 'paid';
                 $remaining_payment_status = 'pending';
+                $registration_payment_status = 'paid';
             } elseif ($status === 'cancelled') {
                 $tracking_status = 'cancelled';
-                $advance_payment_status = 'pending';
+                $advance_payment_status = 'paid';
                 $remaining_payment_status = 'pending';
+                $registration_payment_status = 'pending';
             } else {
                 $tracking_status = 'pending_confirmation';
-                $advance_payment_status = 'pending';
+                $advance_payment_status = 'paid';
                 $remaining_payment_status = 'pending';
+                $registration_payment_status = 'pending';
             }
 
             Booking::create([
@@ -139,6 +144,8 @@ class BookingSeeder extends Seeder
                 'remaining_amount' => $remaining_amount,
                 'advance_payment_status' => $advance_payment_status,
                 'remaining_payment_status' => $remaining_payment_status,
+                'registration_charge' => 500.00,
+                'registration_payment_status' => $registration_payment_status,
                 'status' => $status,
                 'tracking_status' => $tracking_status,
                 'vendor_commission_amount' => $vendor_commission_amount,

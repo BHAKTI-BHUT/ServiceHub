@@ -41,7 +41,7 @@ class DashboardController extends Controller
                     'pending_bookings'  => \App\Models\Booking::where('status', 'pending')->count(),
                     'confirmed_bookings'=> \App\Models\Booking::where('status', 'confirmed')->count(),
                     'cancelled_bookings'=> \App\Models\Booking::where('status', 'cancelled')->count(),
-                    'total_revenue'     => \App\Models\Booking::where('remaining_payment_status', 'paid')->sum('amount'),
+                    'total_revenue'     => \App\Models\Booking::where('remaining_payment_status', 'paid')->sum('amount') + \App\Models\Booking::where('registration_payment_status', 'paid')->sum('registration_charge'),
                     'pending_revenue'   => \App\Models\Booking::where('remaining_payment_status', 'pending')->where('status', '!=', 'cancelled')->sum('remaining_amount'),
                     'total_vehicles'    => \App\Models\Vehicle::count(),
                     'active_vehicles'   => \App\Models\Vehicle::where('status', 1)->count(),

@@ -223,7 +223,7 @@ class BookingController extends Controller
         $extraChargesTotal      = $loadingCharge + $unloadingCharge + $packingCharge + $labourCharge;
         $grandTotal             = $quote['total_amount'] + $extraChargesTotal;
         $vendorCommissionAmount = round($grandTotal * ($vendorCommissionPct / 100), 2);
-        $advanceAmount          = $quote['advance_amount'] ?? round($grandTotal * 0.20, 2);
+        $advanceAmount          = 0.00;
 
         DB::beginTransaction();
         try {
@@ -263,9 +263,9 @@ class BookingController extends Controller
                 'amount'                   => $grandTotal,
 
                 // Payment breakdown
-                'advance_amount'           => $advanceAmount,
-                'remaining_amount'         => $grandTotal - $advanceAmount,
-                'advance_payment_status'   => 'pending',
+                'advance_amount'           => 0.00,
+                'remaining_amount'         => $grandTotal,
+                'advance_payment_status'   => 'paid',
                 'remaining_payment_status' => 'pending',
 
                 // Vendor settlement
@@ -425,7 +425,7 @@ class BookingController extends Controller
 
         $extraChargesTotal      = $loadingCharge + $unloadingCharge + $packingCharge + $labourCharge;
         $grandTotal             = $quote['total_amount'] + $extraChargesTotal;
-        $advanceAmount          = $quote['advance_amount'] ?? round($grandTotal * 0.20, 2);
+        $advanceAmount          = 0.00;
         $vendorCommissionAmount = round($grandTotal * 0.15, 2);
 
         DB::beginTransaction();
@@ -462,8 +462,8 @@ class BookingController extends Controller
                 'packing_charge'           => $packingCharge,
                 'labour_charge'            => $labourCharge,
                 'amount'                   => $grandTotal,
-                'advance_amount'           => $advanceAmount,
-                'remaining_amount'         => $grandTotal - $advanceAmount,
+                'advance_amount'           => 0.00,
+                'remaining_amount'         => $grandTotal,
                 'vendor_commission_amount' => $vendorCommissionAmount,
                 'vendor_settlement_amount' => $grandTotal - $vendorCommissionAmount,
             ]);

@@ -431,10 +431,7 @@
                         <span class="fs-14 fw-bold">Total</span>
                         <span class="fs-15 fw-bold text-primary" id="totalAmountVal">₹0</span>
                     </div>
-                    <div class="d-flex justify-content-between text-muted">
-                        <span class="fs-12">Advance</span>
-                        <span class="fs-12" id="advanceVal">₹0</span>
-                    </div>
+
                     <div class="d-flex justify-content-between text-muted">
                         <span class="fs-12">Distance</span>
                         <span class="fs-12" id="distanceKmVal">0 km</span>
@@ -530,7 +527,7 @@ $(document).ready(function () {
         peakPercent: {{ $pricingConfig['peak_time_surge_percentage'] }},
         peakStart: '{{ $pricingConfig['peak_time_start'] }}',
         peakEnd: '{{ $pricingConfig['peak_time_end'] }}',
-        advancePercent: {{ $pricingConfig['advance_payment_percentage'] }}
+        advancePercent: 0
     };
 
     $('#shifting_date').attr('min', today);
@@ -671,7 +668,7 @@ $(document).ready(function () {
                     $('#categoryDetected').text('Survey Required');
                     $('#vehicleDetected').text('Physical survey needed');
                     $('#surveyAlert').removeClass('d-none');
-                    ['baseFareVal','distanceVal','addonVal','floorVal','weekendVal','monthEndVal','totalAmountVal','advanceVal']
+                    ['baseFareVal','distanceVal','addonVal','floorVal','weekendVal','monthEndVal','totalAmountVal']
                         .forEach(id => $('#'+id).text('—'));
                     return;
                 }
@@ -692,12 +689,12 @@ $(document).ready(function () {
                 $('#weekendRule').text(parseFloat(pricingConfig.weekendPercent).toLocaleString('en-IN') + '%');
                 $('#monthEndRule').text(parseFloat(pricingConfig.monthEndPercent).toLocaleString('en-IN') + '%');
                 $('#peakRule').text(parseFloat(pricingConfig.peakPercent).toLocaleString('en-IN') + '% (' + pricingConfig.peakStart + '-' + pricingConfig.peakEnd + ')');
-                $('#advanceRule').text(parseFloat(pricingConfig.advancePercent).toLocaleString('en-IN') + '%');
+
 
                 var pricingHint = 'Base fare comes from the selected category, and point-based pricing adds ' + (data.price_per_point > 0 ? 'volume points × ₹' + parseFloat(data.price_per_point).toLocaleString('en-IN') + ' per point' : 'no extra point rate') + '. Floor charge adds ' + (data.floor_charges ? 'based on entered floors' : 'when floors are entered') + '.';
                 $('#pricingHintBox').html('<div><i class="ri-information-line me-1"></i>' + pricingHint + '</div>');
                 $('#totalAmountVal').text(fmt(data.total_amount));
-                $('#advanceVal').text(fmt(data.advance_amount ?? (data.total_amount * 0.20)));
+
                 $('#distanceKmVal').text((data.total_distance_km || 0) + ' km');
 
                 if (data.weekend_charges > 0) {
@@ -758,8 +755,7 @@ $(document).ready(function () {
         // Update grand total in sidebar (only if system total has been fetched)
         if (lastSystemTotal > 0 || extra > 0) {
             $('#totalAmountVal').text(fmt(grandTotal));
-            var advPct = {{ $pricingConfig['advance_payment_percentage'] }};
-            $('#advanceVal').text(fmt(grandTotal * advPct / 100));
+
         }
     }
 
