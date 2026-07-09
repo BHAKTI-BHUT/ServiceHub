@@ -258,6 +258,92 @@ class BookingController extends Controller
 
         \DB::beginTransaction();
         try {
+        // Check if a pending booking already exists for this customer on the same shifting date
+        $existingBooking = \App\Models\Booking::where('customer_id', $customerId)
+            ->where('shifting_date', $validated['shifting_date'])
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingBooking) {
+            // Update the existing booking instead of creating a new one
+            $booking = $existingBooking;
+            // Update core fields
+            $booking->update([
+                'pickup_location'          => $validated['pickup_location'],
+                'drop_location'            => $validated['drop_location'],
+                'pickup_latitude'          => $validated['pickup_latitude'],
+                'pickup_longitude'         => $validated['pickup_longitude'],
+                'drop_latitude'            => $validated['drop_latitude'],
+                'drop_longitude'           => $validated['drop_longitude'],
+                'pickup_contact_name'      => $validated['pickup_contact_name'] ?? null,
+                'pickup_contact_mobile'    => $validated['pickup_contact_mobile'] ?? null,
+                'drop_contact_name'        => $validated['drop_contact_name'] ?? null,
+                'drop_contact_mobile'      => $validated['drop_contact_mobile'] ?? null,
+                'shifting_date'            => $validated['shifting_date'],
+                'shifting_time'            => $validated['shifting_time'] ? date('H:i:s', strtotime($validated['shifting_time'])) : null,
+                'floors'                   => $validated['floors'] ?? 0,
+                // PricingEngine output (same as creation)
+                'total_volume_score'       => $quote['total_volume_score'] ?? null,
+                'category_id'              => $quote['category_id'] ?? null,
+                'vehicle_id'               => $quote['vehicle_id'] ?? null,
+                'total_distance'           => $quote['total_distance_km'] ?? null,
+                'base_fare'                => $quote['base_fare'] ?? null,
+                'distance_charges'         => $quote['distance_charges'] ?? null,
+                'addon_charges'            => $quote['addon_charges'] ?? null,
+                'floor_charges'            => $quote['floor_charges'] ?? null,
+                'weekend_charges'          => $quote['weekend_charges'] ?? null,
+                'month_end_charges'        => $quote['month_end_charges'] ?? null,
+                'loading_charge'           => $loadingCharge,
+                'unloading_charge'        => $unloadingCharge,
+                'packing_charge'           => $packingCharge,
+                'labour_charge'            => $labourCharge,
+                'amount'                   => $grandTotal,
+                // Payment breakdown (keep registration fields unchanged)
+                'remaining_amount'         => $grandTotal,
+                'vendor_commission_amount'=> $vendorCommissionAmount,
+                'vendor_settlement_amount'=> $grandTotal - $vendorCommissionAmount,
+            ]);
+
+            // Sync items
+            $syncItems = [];
+            if (!empty($validated['items'])) {
+                foreach ($validated['items'] as $itemInput) {
+                    $lineScore = 0;
+                    if (!empty($quote['items_breakdown'])) {
+                        foreach ($quote['items_breakdown'] as $breakdown) {
+                            if ($breakdown['id'] == $itemInput['id']) {
+                                $lineScore = $breakdown['line_score'] ?? 0;
+                                break;
+                            }
+                        }
+                    }
+                    $syncItems[$itemInput['id']] = [
+                        'quantity' => $itemInput['quantity'],
+                        'calculated_volume_score' => $lineScore,
+                    ];
+                }
+            }
+            $booking->items()->sync($syncItems);
+
+            // Sync add-ons
+            $syncAddons = [];
+            if (!empty($validated['addon_ids'])) {
+                foreach ($validated['addon_ids'] as $addonId) {
+                    $addonPrice = 0;
+                    if (!empty($quote['addons_breakdown'])) {
+                        foreach ($quote['addons_breakdown'] as $addonData) {
+                            if ($addonData['id'] == $addonId) {
+                                $addonPrice = $addonData['price'] ?? 0;
+                                break;
+                            }
+                        }
+                    }
+                    $syncAddons[$addonId] = ['price' => $addonPrice];
+                }
+            }
+            $booking->addOns()->sync($syncAddons);
+        } else {
+            // Create a brand‑new booking (original logic)
             $booking = \App\Models\Booking::create([
                 'customer_id'              => $validated['customer_id'],
                 'pickup_location'          => $validated['pickup_location'],
@@ -275,40 +361,39 @@ class BookingController extends Controller
                 'floors'                   => $validated['floors'] ?? 0,
                 'status'                   => 'pending',
                 // PricingEngine output
-                'total_volume_score' => $quote['total_volume_score'] ?? null,
-                'category_id' => $quote['category_id'] ?? null,
-                'vehicle_id' => $quote['vehicle_id'] ?? null,
-                'total_distance' => $quote['total_distance_km'] ?? null,
-                'base_fare' => $quote['base_fare'] ?? null,
-                'distance_charges' => $quote['distance_charges'] ?? null,
-                'addon_charges' => $quote['addon_charges'] ?? null,
-                'floor_charges' => $quote['floor_charges'] ?? null,
-                'weekend_charges' => $quote['weekend_charges'] ?? null,
-                'month_end_charges' => $quote['month_end_charges'] ?? null,
-                'loading_charge' => $loadingCharge,
-                'unloading_charge' => $unloadingCharge,
-                'packing_charge' => $packingCharge,
-                'labour_charge' => $labourCharge,
-                'amount' => $grandTotal,
+                'total_volume_score'       => $quote['total_volume_score'] ?? null,
+                'category_id'             => $quote['category_id'] ?? null,
+                'vehicle_id'               => $quote['vehicle_id'] ?? null,
+                'total_distance'           => $quote['total_distance_km'] ?? null,
+                'base_fare'                => $quote['base_fare'] ?? null,
+                'distance_charges'        => $quote['distance_charges'] ?? null,
+                'addon_charges'           => $quote['addon_charges'] ?? null,
+                'floor_charges'           => $quote['floor_charges'] ?? null,
+                'weekend_charges'         => $quote['weekend_charges'] ?? null,
+                'month_end_charges'       => $quote['month_end_charges'] ?? null,
+                'loading_charge'          => $loadingCharge,
+                'unloading_charge'         => $unloadingCharge,
+                'packing_charge'          => $packingCharge,
+                'labour_charge'           => $labourCharge,
+                'amount'                  => $grandTotal,
                 // Payment breakdown
-                'advance_amount' => 0.00,
-                'remaining_amount' => $grandTotal,
-                'advance_payment_status' => 'paid',
-                'remaining_payment_status' => 'pending',
+                'advance_amount'          => 0.00,
+                'remaining_amount'        => $grandTotal,
+                'advance_payment_status'  => 'paid',
+                'remaining_payment_status'=> 'pending',
                 // Vendor settlement
-                'vendor_commission_amount' => $vendorCommissionAmount,
-                'vendor_settlement_amount' => $grandTotal - $vendorCommissionAmount,
+                'vendor_commission_amount'=> $vendorCommissionAmount,
+                'vendor_settlement_amount'=> $grandTotal - $vendorCommissionAmount,
                 // Registration Payment fields
-                'registration_charge' => $registrationCharge,
-                'registration_payment_status' => 'pending',
-                'registration_order_id' => $razorpayOrderId,
+                'registration_charge'      => $registrationCharge,
+                'registration_payment_status'=> 'pending',
+                'registration_order_id'   => $razorpayOrderId,
             ]);
 
-            // Attach items from the request (user-selected items)
+            // Attach items
             if (!empty($validated['items'])) {
                 foreach ($validated['items'] as $itemInput) {
                     $lineScore = 0;
-                    // Try to find the line score from PricingEngine breakdown if available
                     if (!empty($quote['items_breakdown'])) {
                         foreach ($quote['items_breakdown'] as $breakdown) {
                             if ($breakdown['id'] == $itemInput['id']) {
@@ -318,13 +403,13 @@ class BookingController extends Controller
                         }
                     }
                     $booking->items()->attach($itemInput['id'], [
-                        'quantity'                => $itemInput['quantity'],
+                        'quantity' => $itemInput['quantity'],
                         'calculated_volume_score' => $lineScore,
                     ]);
                 }
             }
 
-            // Attach add-ons selected by user
+            // Attach add‑ons
             if (!empty($validated['addon_ids'])) {
                 foreach ($validated['addon_ids'] as $addonId) {
                     $addonPrice = 0;
@@ -339,9 +424,10 @@ class BookingController extends Controller
                     $booking->addOns()->attach($addonId, ['price' => $addonPrice]);
                 }
             }
+        }
 
-            \DB::commit();
-        } catch (\Throwable $e) {
+        \DB::commit();
+    } catch (\Throwable $e) {
             \DB::rollBack();
             return response()->json(['message' => 'Failed to create booking: ' . $e->getMessage()], 500);
         }

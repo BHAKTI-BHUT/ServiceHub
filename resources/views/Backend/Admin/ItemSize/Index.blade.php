@@ -39,9 +39,6 @@
                 { data: 'status', name: 'status' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]);
-
-            initDrawerForm('.edit-btn, a[href="{{ route('admin.item-sizes.create') }}"]', table);
-            initDeleteHandler('.delete-btn', table);
         });
     </script>
 @endsection

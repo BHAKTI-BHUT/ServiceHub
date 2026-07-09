@@ -24,9 +24,9 @@ class ItemSizeController extends Controller
                     }
                 })
                 ->addColumn('action', function ($row) {
-                    $editBtn = '<button type="button" class="btn btn-sm btn-info text-white me-1 edit-btn" data-url="' . route('admin.item-sizes.edit', $row->id) . '" title="Edit"><i class="ri-edit-2-line"></i></button>';
-                    $deleteBtn = '<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="' . route('admin.item-sizes.destroy', $row->id) . '" title="Delete"><i class="ri-delete-bin-line"></i></button>';
-                    return $editBtn . $deleteBtn;
+                    $editBtn = '<a href="' . route('admin.item-sizes.edit', $row->id) . '" class="btn icon-btn-sm btn-light-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Edit" data-drawer="true" data-drawer-title="Edit Item Size"><i class="ri-pencil-line"></i></a>';
+                    $deleteForm = '<form action="' . route('admin.item-sizes.destroy', $row->id) . '" method="POST" class="delete-form" style="display:inline;">' . csrf_field() . method_field("DELETE") . '<button type="submit" class="btn icon-btn-sm btn-light-danger delete-item" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Delete"><i class="ri-delete-bin-line"></i></button></form>';
+                    return '<div class="hstack gap-2 fs-15">' . $editBtn . $deleteForm . '</div>';
                 })
                 ->rawColumns(['status', 'action'])
                 ->make(true);
