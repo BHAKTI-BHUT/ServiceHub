@@ -18,7 +18,9 @@ class BookingController extends Controller
                 $query->where('status', 'active');
             }])->get();
 
-        $addons = \App\Models\AddOn::where('status', 'active')->get();
+        $addons = \App\Models\AddOnCategory::with(['addons' => function($q) {
+            $q->where('status', '1');
+        }])->where('status', 'active')->get();
 
         $pricingSettings = \App\Models\PricingSetting::whereIn('key', [
             'per_km_rate',

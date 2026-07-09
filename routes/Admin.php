@@ -12,6 +12,7 @@ use App\Http\Controllers\Backend\Admin\RevenueController;
 use App\Http\Controllers\Backend\Admin\FeedbackController;
 use App\Http\Controllers\Backend\Admin\ReportController;
 use App\Http\Controllers\Backend\Admin\ItemSizeController;
+use App\Http\Controllers\Backend\Admin\AddOnCategoryController;
 use App\Http\Controllers\Backend\VendorSupervisorController;
 
 /*
@@ -86,6 +87,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/item-sizes/{item_size}/edit', [ItemSizeController::class, 'edit'])->name('item-sizes.edit');
         Route::put('/item-sizes/{item_size}',      [ItemSizeController::class, 'update'])->name('item-sizes.update');
         Route::delete('/item-sizes/{item_size}',   [ItemSizeController::class, 'destroy'])->name('item-sizes.destroy');
+
+        // Add-On Categories
+        Route::get('/addon-categories',              [AddOnCategoryController::class, 'index'])->name('addon-categories');
+        Route::get('/addon-categories/create',       [AddOnCategoryController::class, 'create'])->name('addon-categories.create');
+        Route::post('/addon-categories',             [AddOnCategoryController::class, 'store'])->name('addon-categories.store');
+        Route::get('/addon-categories/{id}',         [AddOnCategoryController::class, 'show'])->name('addon-categories.show');
+        Route::get('/addon-categories/{id}/edit',    [AddOnCategoryController::class, 'edit'])->name('addon-categories.edit');
+        Route::put('/addon-categories/{id}',         [AddOnCategoryController::class, 'update'])->name('addon-categories.update');
+        Route::delete('/addon-categories/{id}',      [AddOnCategoryController::class, 'destroy'])->name('addon-categories.destroy');
 
         // Add-On Services
         Route::get('/addons',              [AddOnController::class, 'index'])->name('addons');

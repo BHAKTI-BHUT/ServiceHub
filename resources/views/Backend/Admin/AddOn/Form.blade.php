@@ -5,6 +5,15 @@
             @method('PUT')
         @endif
         <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select class="form-select" name="addon_category_id">
+                <option value="">-- Select Category (Optional) --</option>
+                @foreach($categories as $cat)
+                    <option value="{{ $cat->id }}" {{ old('addon_category_id', $addon->addon_category_id ?? '') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="mb-3">
             <label class="form-label">Service Name</label>
             <input type="text" class="form-control" name="addon_name" value="{{ old('addon_name', $addon->addon_name ?? '') }}" required>
         </div>

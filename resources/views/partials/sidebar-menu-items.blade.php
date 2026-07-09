@@ -177,6 +177,12 @@
 
             @can('view addon')
             <li class="slide">
+                <a href="{{ route('admin.addon-categories') }}"
+                   class="side-menu__item {{ request()->routeIs('admin.addon-categories*') ? 'active' : '' }}" role="menuitem">
+                    Add-on Categories
+                </a>
+            </li>
+            <li class="slide">
                 <a href="{{ route('admin.addons') }}"
                    class="side-menu__item {{ $isAddonActive ? 'active' : '' }}" role="menuitem">
                     Add-On Services

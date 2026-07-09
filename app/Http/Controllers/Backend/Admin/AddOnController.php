@@ -12,9 +12,10 @@ class AddOnController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = AddOn::query();
+            $query = AddOn::with('category');
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('category_name', fn($row) => $row->category ? $row->category->name : 'N/A')
                 ->addColumn('status_badge', fn($row) => $row->status
                     ? '<span class="badge bg-success">Active</span>'
                     : '<span class="badge bg-danger">Inactive</span>')
@@ -31,12 +32,14 @@ class AddOnController extends Controller
 
     public function create()
     {
-        return view('Backend.Admin.AddOn.Form');
+        $categories = \App\Models\AddOnCategory::where('status', 'active')->get();
+        return view('Backend.Admin.AddOn.Form', compact('categories'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
+            'addon_category_id' => 'nullable|exists:add_on_categories,id',
             'addon_name' => 'required|string|max:255',
             'price'      => 'required|numeric|min:0',
             'status'     => 'required|boolean',
@@ -54,13 +57,15 @@ class AddOnController extends Controller
     public function edit($id)
     {
         $addon = AddOn::findOrFail($id);
-        return view('Backend.Admin.AddOn.Form', compact('addon'));
+        $categories = \App\Models\AddOnCategory::where('status', 'active')->get();
+        return view('Backend.Admin.AddOn.Form', compact('addon', 'categories'));
     }
 
     public function update(Request $request, $id)
     {
         $addon = AddOn::findOrFail($id);
         $data = $request->validate([
+            'addon_category_id' => 'nullable|exists:add_on_categories,id',
             'addon_name' => 'required|string|max:255',
             'price'      => 'required|numeric|min:0',
             'status'     => 'required|boolean',

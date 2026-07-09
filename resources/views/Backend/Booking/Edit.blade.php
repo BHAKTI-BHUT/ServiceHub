@@ -229,27 +229,58 @@
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    @foreach($addons as $addon)
-                    @php
-                        $hasAddon = $booking->addOns->contains('id', $addon->id);
-                    @endphp
-                    <div class="col-md-6">
-                        <div class="addon-card border rounded p-3 d-flex align-items-center gap-3 cursor-pointer {{ $hasAddon ? 'selected' : '' }}" id="addon-wrap-{{ $addon->id }}">
-                            <div class="form-check mb-0">
-                                <input class="form-check-input addon-checkbox" type="checkbox"
-                                    id="addon_{{ $addon->id }}"
-                                    name="addons[]"
-                                    value="{{ $addon->id }}"
-                                    data-price="{{ $addon->price }}"
-                                    {{ $hasAddon ? 'checked' : '' }}>
+                    {{-- Category-wise Add-Ons Accordion --}}
+                    <div class="col-12">
+                        <div class="accordion" id="addonCategoryAccordion">
+                            @foreach($addonCategories as $catIndex => $category)
+                            @if($category->addons->count() > 0)
+                            <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                                <h2 class="accordion-header" id="addonCatHead-{{ $category->id }}">
+                                    <button class="accordion-button {{ $catIndex > 0 ? 'collapsed' : '' }} fw-semibold fs-14 py-2 px-3"
+                                        type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#addonCatBody-{{ $category->id }}"
+                                        aria-expanded="{{ $catIndex === 0 ? 'true' : 'false' }}"
+                                        aria-controls="addonCatBody-{{ $category->id }}">
+                                        <i class="ri-folder-line me-2 text-primary"></i>
+                                        {{ $category->name }}
+                                        <span class="badge bg-primary-subtle text-primary ms-2 fs-11">{{ $category->addons->count() }}</span>
+                                    </button>
+                                </h2>
+                                <div id="addonCatBody-{{ $category->id }}"
+                                    class="accordion-collapse collapse {{ $catIndex === 0 ? 'show' : '' }}"
+                                    aria-labelledby="addonCatHead-{{ $category->id }}"
+                                    data-bs-parent="#addonCategoryAccordion">
+                                    <div class="accordion-body p-3">
+                                        <div class="row g-2">
+                                            @foreach($category->addons as $addon)
+                                            @php
+                                                $hasAddon = $booking->addOns->contains('id', $addon->id);
+                                            @endphp
+                                            <div class="col-md-6">
+                                                <div class="addon-card border rounded p-3 d-flex align-items-center gap-3 cursor-pointer {{ $hasAddon ? 'selected' : '' }}" id="addon-wrap-{{ $addon->id }}">
+                                                    <div class="form-check mb-0">
+                                                        <input class="form-check-input addon-checkbox" type="checkbox"
+                                                            id="addon_{{ $addon->id }}"
+                                                            name="addons[]"
+                                                            value="{{ $addon->id }}"
+                                                            data-price="{{ $addon->price }}"
+                                                            {{ $hasAddon ? 'checked' : '' }}>
+                                                    </div>
+                                                    <label class="form-check-label d-flex justify-content-between align-items-center w-100 cursor-pointer" for="addon_{{ $addon->id }}">
+                                                        <span class="fs-13 fw-medium">{{ $addon->addon_name }}</span>
+                                                        <span class="badge bg-success-subtle text-success fs-12 ms-2 text-nowrap">+₹{{ number_format($addon->price, 0) }}</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <label class="form-check-label d-flex justify-content-between align-items-center w-100 cursor-pointer" for="addon_{{ $addon->id }}">
-                                <span class="fs-13 fw-medium">{{ $addon->addon_name }}</span>
-                                <span class="badge bg-success-subtle text-success fs-12 ms-2 text-nowrap">+₹{{ number_format($addon->price, 0) }}</span>
-                            </label>
+                            @endif
+                            @endforeach
                         </div>
                     </div>
-                    @endforeach
 
                     {{-- Floor Count --}}
                     <div class="col-12 mt-2">

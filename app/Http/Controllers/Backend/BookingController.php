@@ -121,7 +121,10 @@ class BookingController extends Controller
             ->with(['items' => function ($query) {
                 $query->where('status', 'active');
             }])->get();
-        $addons = \App\Models\AddOn::where('status', 'active')->get();
+        $addonCategories = \App\Models\AddOnCategory::where('status', 'active')
+            ->with(['addons' => function ($q) {
+                $q->where('status', 1);
+            }])->get();
 
         $pricingSettings = PricingSetting::whereIn('key', [
             'per_km_rate',
@@ -147,7 +150,7 @@ class BookingController extends Controller
 
         $customers = User::role('Customer')->orderBy('name')->get();
 
-        return view('Backend.Booking.Create', compact('itemSizes', 'addons', 'pricingConfig', 'customers'));
+        return view('Backend.Booking.Create', compact('itemSizes', 'addonCategories', 'pricingConfig', 'customers'));
     }
 
     /**
@@ -328,7 +331,10 @@ class BookingController extends Controller
             ->with(['items' => function ($query) {
                 $query->where('status', 'active');
             }])->get();
-        $addons = \App\Models\AddOn::where('status', 'active')->get();
+        $addonCategories = \App\Models\AddOnCategory::where('status', 'active')
+            ->with(['addons' => function ($q) {
+                $q->where('status', 1);
+            }])->get();
 
         $pricingSettings = PricingSetting::whereIn('key', [
             'per_km_rate',
@@ -355,7 +361,7 @@ class BookingController extends Controller
         $customers = User::role('Customer')->orderBy('name')->get();
         $vendors = User::role('Vendor')->orderBy('name')->get();
 
-        return view('Backend.Booking.Edit', compact('booking', 'itemSizes', 'addons', 'pricingConfig', 'customers', 'vendors'));
+        return view('Backend.Booking.Edit', compact('booking', 'itemSizes', 'addonCategories', 'pricingConfig', 'customers', 'vendors'));
     }
 
     /**

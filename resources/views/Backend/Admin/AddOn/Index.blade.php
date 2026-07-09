@@ -13,6 +13,7 @@
                     <thead class="bg-light bg-opacity-30">
                         <tr>
                             <th>#</th>
+                            <th>Category Name</th>
                             <th>Service Name</th>
                             <th>Price (₹)</th>
                             <th>Status</th>
@@ -33,6 +34,7 @@
     $(document).ready(function() {
         initDataTable('#addon-table', '{{ route('admin.addons') }}', [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'category_name', name: 'category.name' },
             { data: 'addon_name', name: 'addon_name' },
             { data: 'price', name: 'price' },
             { data: 'status_badge', name: 'status', orderable: false, searchable: false },

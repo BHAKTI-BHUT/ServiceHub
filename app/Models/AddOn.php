@@ -10,10 +10,16 @@ class AddOn extends Model
     use HasFactory;
 
     protected $fillable = [
+        'addon_category_id',
         'addon_name',
         'price',
         'status',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(AddOnCategory::class, 'addon_category_id');
+    }
 
     public function bookings()
     {
