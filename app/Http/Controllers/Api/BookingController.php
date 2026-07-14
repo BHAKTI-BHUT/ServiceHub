@@ -19,7 +19,7 @@ class BookingController extends Controller
             }])->get();
 
         $addons = \App\Models\AddOnCategory::with(['addons' => function($q) {
-            $q->where('status', '1');
+            $q->where('status', 'active');
         }])->where('status', 'active')->get();
 
         $pricingSettings = \App\Models\PricingSetting::whereIn('key', [

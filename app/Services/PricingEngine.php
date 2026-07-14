@@ -150,8 +150,9 @@ class PricingEngine
         }
 
         // ── Step 5: Add-On Services ───────────────────────────────────────────
-        if (isset($data['addons']) && is_array($data['addons'])) {
-            foreach ($data['addons'] as $addonId) {
+        $addonKeys = $data['addons'] ?? $data['addon_ids'] ?? null;
+        if (isset($addonKeys) && is_array($addonKeys)) {
+            foreach ($addonKeys as $addonId) {
                 $addon = AddOn::find($addonId);
                 if ($addon) {
                     $breakdown['addon_charges'] += $addon->price;

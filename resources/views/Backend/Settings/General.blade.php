@@ -48,14 +48,14 @@
                                 </div>
                             </div>
 
-                            <div class="col-12">
+                            <!-- <div class="col-12">
                                 <label class="form-label">Footer Text</label>
                                 <textarea name="footer_text" class="form-control @error('footer_text') is-invalid @enderror" rows="2"
                                     placeholder="Footer text">{{ old('footer_text', $settings['footer_text'] ?? '') }}</textarea>
                                 @error('footer_text')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
-                            </div>
+                            </div> -->
                         </div>
 
                         <div class="d-flex justify-content-end gap-2 mt-4">

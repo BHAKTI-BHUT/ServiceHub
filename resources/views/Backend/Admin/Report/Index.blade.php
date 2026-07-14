@@ -33,14 +33,14 @@
                         </button>
                     </div>
                 </div>
-                <table id="report-table" class="table table-hover align-middle table-nowrap w-100">
+                <table id="report-table" class="table table-hover align-middle w-100">
                     <thead class="bg-light bg-opacity-30">
                         <tr>
                             <th>#</th>
                             <th>Booking No.</th>
                             <th>Customer</th>
-                            <th>Pickup</th>
-                            <th>Drop</th>
+                            <th style="max-width: 200px; white-space: normal;">Pickup</th>
+                            <th style="max-width: 200px; white-space: normal;">Drop</th>
                             <th>Date</th>
                             <th>Amount (₹)</th>
                             <th>Status</th>
@@ -60,8 +60,8 @@
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'booking_number', name: 'booking_number' },
             { data: 'customer_name', name: 'customer.name' },
-            { data: 'pickup_location', name: 'pickup_location' },
-            { data: 'drop_location', name: 'drop_location' },
+            { data: 'pickup_location', name: 'pickup_location', className: 'text-wrap', width: '200px' },
+            { data: 'drop_location', name: 'drop_location', className: 'text-wrap', width: '200px' },
             { data: 'shifting_date', name: 'shifting_date' },
             { data: 'amount', name: 'amount' },
             { data: 'status_badge', name: 'status', orderable: false, searchable: false }
