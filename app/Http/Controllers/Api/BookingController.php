@@ -260,9 +260,8 @@ class BookingController extends Controller
 
         \DB::beginTransaction();
         try {
-        // Check if a pending booking already exists for this customer on the same shifting date
+        // Check if a pending booking already exists for this customer
         $existingBooking = \App\Models\Booking::where('customer_id', $customerId)
-            ->where('shifting_date', $validated['shifting_date'])
             ->where('status', 'pending')
             ->first();
 

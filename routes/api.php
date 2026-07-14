@@ -9,6 +9,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 
+// Razorpay Webhook
+Route::post('/webhook/razorpay', [\App\Http\Controllers\Api\RazorpayWebhookController::class, 'handle']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
