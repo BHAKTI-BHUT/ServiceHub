@@ -279,28 +279,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function btnLoader() {
-    const btnLoader = document.querySelectorAll('.btn-loader');
-    btnLoader.forEach(button => {
-      button.addEventListener('click', function () {
-        const originalText = this.querySelector('.indicator-label').textContent;
-        const loadingText = this.getAttribute('data-loading-text');
+    const buttons = document.querySelectorAll('.btn-loader');
+    buttons.forEach(function(button) {
+      const form = button.closest('form');
+      if (!form) return;
 
-        // Show loading indicator and disable button
-        this.classList.add('loading');
-        this.querySelector('.indicator-label').textContent = loadingText;
-        this.disabled = true;
-
-        // Simulate an asynchronous operation (e.g., form submission)
-        setTimeout(() => {
-          // Hide loading indicator and reset button
-          this.classList.remove('loading');
-          this.querySelector('.indicator-label').textContent = originalText;
-          this.disabled = false;
-
-        }, 1500); // Simulated delay of 2 seconds
+      // ✅ form ke submit event pe listen karo — button click pe nahi
+      // Kyunki: button click pe disabled=true karne se form submit block ho jaata hai
+      // Form submit event tab fire hota hai jab submission already trigger ho chuki ho
+      form.addEventListener('submit', function() {
+        button.classList.add('loading');
+        // disabled mat karo — form already submit ho raha hai
+        // double-submit rokne ke liye sirf visual loading dikhao
       });
     });
   }
+
 
   function needsValidation() {
     const needsValidation = document.getElementsByClassName('.needs-validation');

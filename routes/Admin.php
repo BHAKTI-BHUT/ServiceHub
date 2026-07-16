@@ -21,7 +21,7 @@ use App\Http\Controllers\Backend\VendorSupervisorController;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
     // ── MASTER MANAGEMENT ─────────────────────────────────
 

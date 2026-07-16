@@ -19,9 +19,19 @@ class BookingRequestController extends Controller
 
             return datatables()->of($requests)
                 ->addColumn('customer_name', function ($req) {
-                    return $req->customer ? $req->customer->name : '<span class="text-muted">—</span>';
+                    $name = $req->customer ? $req->customer->name : '<span class="text-muted">—</span>';
+                    // Website Lead ko badge se mark karein
+                    if ($req->customer && $req->customer->id === 49) {
+                        $name .= ' <span class="badge bg-info-focus text-info fs-10">Website</span>';
+                    }
+                    return $name;
                 })
                 ->addColumn('customer_mobile', function ($req) {
+                    // phone_number (booking_requests column) pehle check karo - website leads ka actual number
+                    if ($req->phone_number) {
+                        return '<a href="tel:' . $req->phone_number . '" class="text-primary fw-semibold">' . $req->phone_number . '</a>';
+                    }
+                    // Fallback: user ka registered mobile
                     return $req->customer ? ($req->customer->mobile ?? '—') : '—';
                 })
                 ->editColumn('shifting_date', function ($req) {
@@ -52,7 +62,7 @@ class BookingRequestController extends Controller
                 ->addColumn('created_at_formatted', function ($req) {
                     return '<div>' . $req->created_at->format('d M Y') . '</div><span class="text-muted fs-11">' . $req->created_at->format('h:i A') . '</span>';
                 })
-                ->rawColumns(['customer_name', 'shifting_date', 'status', 'action', 'pickup_location', 'drop_location', 'created_at_formatted'])
+                ->rawColumns(['customer_name', 'customer_mobile', 'shifting_date', 'status', 'action', 'pickup_location', 'drop_location', 'created_at_formatted'])
                 ->make(true);
         }
 
