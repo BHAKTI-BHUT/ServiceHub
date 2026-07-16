@@ -19,6 +19,7 @@
                             <th>Mobile</th>
                             <th>City</th>
                             <th>Status</th>
+                            <th>Source</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -59,6 +60,12 @@
                 {
                     data: 'status',
                     name: 'status',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'registered_from',
+                    name: 'registered_from',
                     orderable: false,
                     searchable: false
                 },

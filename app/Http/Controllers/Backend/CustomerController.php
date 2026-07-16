@@ -39,6 +39,19 @@ class CustomerController extends Controller
                 ->editColumn('city', function ($customer) {
                     return $customer->city ?? '—';
                 })
+                ->addColumn('registered_from', function ($customer) {
+                    if ($customer->registered_from === 'web') {
+                        $color = '#0dcaf0';
+                        $label = 'Website';
+                    } elseif ($customer->registered_from === 'app') {
+                        $color = '#2e7d32';
+                        $label = 'App';
+                    } else {
+                        $color = '#0d6efd';
+                        $label = 'Admin';
+                    }
+                    return '<span style="color: ' . $color . '; font-weight: 700; font-size: 12px;">' . $label . '</span>';
+                })
                 ->addColumn('status', function ($customer) {
                     $badge = $customer->status === 'active' ? 'bg-success' : 'bg-danger';
                     $label = $customer->status ? ucfirst($customer->status) : 'Active';
@@ -70,7 +83,7 @@ class CustomerController extends Controller
                     $buttons .= '</div>';
                     return $buttons;
                 })
-                ->rawColumns(['image', 'status', 'action'])
+                ->rawColumns(['image', 'status', 'action', 'registered_from'])
                 ->make(true);
         }
 

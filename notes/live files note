@@ -18,3 +18,11 @@ app
 public/assets/js/app.js
 resourse
 routes
+
+17.07
+
+
+app/Http/Controllers/Backend/BookingRequestController.php
+resources/views/Backend/Customer/Index.blade.php
+database/migrations/2026_07_16_192959_make_shifting_time_nullable_in_bookings_table.php
+public

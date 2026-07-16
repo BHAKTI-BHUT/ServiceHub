@@ -19,10 +19,19 @@ class BookingRequestController extends Controller
 
             return datatables()->of($requests)
                 ->addColumn('customer_name', function ($req) {
-                    $name = $req->customer ? $req->customer->name : '<span class="text-muted">—</span>';
-                    // Website Lead ko badge se mark karein
-                    if ($req->customer && $req->customer->id === 49) {
-                        $name .= ' <span class="badge bg-info-focus text-info fs-10">Website</span>';
+                    $name = $req->customer ? e($req->customer->name) : '<span class="text-muted">—</span>';
+                    if ($req->customer) {
+                        if ($req->customer->id === 49 || $req->customer->registered_from === 'web') {
+                            $color = '#0dcaf0';
+                            $label = '(Website)';
+                        } elseif ($req->customer->registered_from === 'app') {
+                            $color = '#2e7d32';
+                            $label = '(App)';
+                        } else {
+                            $color = '#0d6efd';
+                            $label = '(Admin)';
+                        }
+                        $name .= ' <span style="color: ' . $color . '; font-weight: 700; font-size: 11px; margin-left: 6px;">' . $label . '</span>';
                     }
                     return $name;
                 })
@@ -107,11 +116,14 @@ class BookingRequestController extends Controller
             'shifting_time' => $bookingRequest->shifting_time,
             'amount' => $bookingRequest->estimated_amount ?? 0.00,
             'status' => 'confirmed', // approved requests are confirmed bookings
+            'registration_payment_status' => $bookingRequest->registration_payment_status ?? 'pending',
+            'registration_payment_id' => $bookingRequest->registration_payment_id,
+            'registration_order_id' => $bookingRequest->registration_order_id,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Request approved and Booking #' . $booking->booking_number . ' created successfully!',
+            'message' => 'Request approved and Booking created successfully!',
             'booking' => $booking
         ]);
     }

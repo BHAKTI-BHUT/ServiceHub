@@ -29,6 +29,19 @@ class UserController extends Controller
                     }
                     return '<span class="text-muted">—</span>';
                 })
+                ->editColumn('name', function ($user) {
+                    if ($user->registered_from === 'web') {
+                        $color = '#0dcaf0';
+                        $label = '(Website)';
+                    } elseif ($user->registered_from === 'app') {
+                        $color = '#2e7d32';
+                        $label = '(App)';
+                    } else {
+                        $color = '#0d6efd';
+                        $label = '(Admin)';
+                    }
+                                                                return e($user->name) . ' <span style="color: ' . $color . '; font-weight: 700; font-size: 11px; margin-left: 6px;">' . $label . '</span>';
+                })
                 // ->editColumn('email_verified_at', function ($user) {
                 //     return $user->email_verified_at ? $user->email_verified_at->format('d M Y, h:i A') : '—';
                 // })
@@ -83,7 +96,7 @@ class UserController extends Controller
                         'permission_route' => route('user.permissions', $user->id),
                     ])->render();
                 })
-                ->rawColumns(['roles', 'status', 'action'])
+                ->rawColumns(['roles', 'status', 'action', 'name'])
                 ->make(true);
         }
 
