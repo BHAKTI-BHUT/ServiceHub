@@ -136,5 +136,5 @@
 @endsection
 
 @section('js')
-    <script type="module" src="{{ asset('assets/js/app.js') }}"></script>
+    {{-- app.js is already loaded via partials/vendor-scripts --}}
 @endsection

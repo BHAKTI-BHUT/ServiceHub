@@ -18,9 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 (function () {
   "use strict";
-  document.querySelector('.horizontal-overlay').addEventListener('click', function () {
-    document.querySelector('.small-screen-horizontal-toggle').click();
-  });
+  const horizontalOverlay = document.querySelector('.horizontal-overlay');
+  if (horizontalOverlay) {
+    horizontalOverlay.addEventListener('click', function () {
+      const toggle = document.querySelector('.small-screen-horizontal-toggle');
+      if (toggle) {
+        toggle.click();
+      }
+    });
+  }
 
   // Tagify User-profile, User-name select menu
   function tagifyUserProfileSelectMenu() {
@@ -152,30 +158,36 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function togglePassword() {
-    const togglePassword = document.getElementsByClassName('.toggle-password');
-    if (togglePassword) {
-      document.querySelectorAll('.toggle-password').forEach(button => {
-        button.addEventListener('click', function () {
-          const input = this.previousElementSibling; // Get the input element
-          const icon = this.querySelector('.toggle-icon'); // Get the icon
+    const toggleButtons = document.querySelectorAll('.toggle-password');
+    if (toggleButtons.length === 0) return;
 
-          // Toggle the input type and visibility state
-          const isVisible = input.getAttribute('data-visible') === 'true';
-          input.setAttribute('type', isVisible ? 'password' : 'text');
-          input.setAttribute('data-visible', !isVisible);
-          icon.classList.toggle('ri-eye-off-line', isVisible);
-          icon.classList.toggle('ri-eye-line', !isVisible);
-        });
-      });
+    toggleButtons.forEach(button => {
+      button.addEventListener('click', function () {
+        const input = this.previousElementSibling;
+        if (!input) return;
+        const icon = this.querySelector('.toggle-icon');
+        if (!icon) return;
 
-      // Show password by default if data-visible is true
-      document.querySelectorAll('input[data-visible="true"]').forEach(input => {
-        input.setAttribute('type', 'text');
-        const icon = input.nextElementSibling.querySelector('.toggle-icon');
-        icon.classList.remove('ri-eye-off-line');
-        icon.classList.add('ri-eye-line');
+        const isVisible = input.getAttribute('data-visible') === 'true';
+        input.setAttribute('type', isVisible ? 'password' : 'text');
+        input.setAttribute('data-visible', String(!isVisible));
+        icon.classList.toggle('ri-eye-off-line', isVisible);
+        icon.classList.toggle('ri-eye-line', !isVisible);
       });
-    }
+    });
+
+    // Show password by default if data-visible is true
+    document.querySelectorAll('input[data-visible="true"]').forEach(input => {
+      input.setAttribute('type', 'text');
+      const sibling = input.nextElementSibling;
+      if (sibling) {
+        const icon = sibling.querySelector('.toggle-icon');
+        if (icon) {
+          icon.classList.remove('ri-eye-off-line');
+          icon.classList.add('ri-eye-line');
+        }
+      }
+    });
   }
 
   function clipboardButton() {
@@ -354,6 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleSidebarToggle() {
     const sidebarOffCanvas = document.querySelector('#smallScreenSidebar');
+    if (!sidebarOffCanvas) return; // Login page ya other pages par exist nahi karta
+
     const offcanvas = new bootstrap.Offcanvas(sidebarOffCanvas);
 
     if (window.innerWidth <= 767.98) {
@@ -361,8 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const backdrop = document.querySelector('.offcanvas-backdrop');
       if (backdrop) {
-        backdrop.classList.remove('show'); // Remove the backdrop visibility
-        document.body.classList.remove('offcanvas-backdrop'); // Remove backdrop-related classes from the body
+        backdrop.classList.remove('show');
+        document.body.classList.remove('offcanvas-backdrop');
       }
 
       offcanvas.hide();

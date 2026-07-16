@@ -69,14 +69,11 @@
     @endif
 
     {{-- ── SERVICE MANAGEMENT ──────────────────────────────── --}}
-    @if(!auth()->user() || !auth()->user()->hasRole('Vendor'))
     @canany(['view customer', 'view booking', 'view booking request'])
     <li class="menu-title" role="presentation">Service Management</li>
     @endcanany
-    @endif
 
     {{-- Customers --}}
-    @if(!auth()->user() || !auth()->user()->hasRole('Vendor'))
     @can('view customer')
     <li class="slide">
         <a href="{{ route('customer.index') }}"
@@ -86,10 +83,8 @@
         </a>
     </li>
     @endcan
-    @endif
 
     {{-- Bookings (dropdown) --}}
-    @if(!auth()->user() || !auth()->user()->hasRole('Vendor'))
     @canany(['view booking request', 'view booking'])
     <li class="slide {{ $isBookingsActive ? 'active open' : '' }}">
         <a href="#!" class="side-menu__item {{ $isBookingsActive ? 'active' : '' }}" role="menuitem">
@@ -117,7 +112,6 @@
         </ul>
     </li>
     @endcanany
-    @endif
 
     {{-- Revenue --}}
     @can('view revenue')
