@@ -364,10 +364,10 @@
                     <div class="route-meta-item"><i class="ri-building-line"></i> Floors: <span>{{ $booking->floors }}</span></div>
                     @endif
                     @if($booking->vehicle)
-                    <div class="route-meta-item"><i class="ri-truck-line"></i> Vehicle: <span>{{ $booking->vehicle->name ?? '—' }}</span></div>
+                    <div class="route-meta-item"><i class="ri-truck-line"></i> Vehicle: <span>{{ $booking->vehicle->vehicle_name ?? '—' }}</span></div>
                     @endif
                     @if($booking->category)
-                    <div class="route-meta-item"><i class="ri-list-check"></i> Category: <span>{{ $booking->category->name ?? '—' }}</span></div>
+                    <div class="route-meta-item"><i class="ri-list-check"></i> Category: <span>{{ $booking->category->category_name ?? '—' }}</span></div>
                     @endif
                 </div>
             </div>

@@ -115,6 +115,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Feedback & Ratings
         Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback');
+        Route::delete('/feedback/{id}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');
 
         // Reports
         Route::get('/reports', [ReportController::class, 'index'])->name('reports');
