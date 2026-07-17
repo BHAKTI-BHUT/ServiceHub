@@ -160,4 +160,71 @@ class AuthController extends Controller
             'message' => 'Logged out successfully.'
         ]);
     }
+
+    /**
+     * Update authenticated user's profile.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|email|max:255|unique:users,email,' . $user->id,
+            'mobile'       => 'nullable|string|max:20|unique:users,mobile,' . $user->id,
+            'image'        => 'nullable|image|max:2048',
+            'remove_image' => 'nullable|string|in:0,1',
+            'password'     => 'nullable|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        // Normalize mobile if changing
+        if (!empty($data['mobile'])) {
+            $data['mobile'] = $this->formatMobile($data['mobile']);
+        }
+
+        // Handle image upload using FileService
+        if ($request->hasFile('image')) {
+            $fileService = app(\App\Services\FileService::class);
+            $data['image'] = $fileService->upload($request->file('image'), 'uploads/profile', $user->image);
+        } elseif ($request->input('remove_image') == '1') {
+            $fileService = app(\App\Services\FileService::class);
+            $fileService->delete($user->image);
+            $data['image'] = null;
+        } else {
+            // Keep old image
+            unset($data['image']);
+        }
+
+        // Handle password if set
+        if (!empty($data['password'])) {
+            $data['password'] = \Illuminate\Support\Facades\Hash::make($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
+        $user->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully!',
+            'user'    => [
+                'id'     => $user->id,
+                'name'   => $user->name,
+                'email'  => $user->email,
+                'mobile' => $user->mobile,
+                'image'  => $user->image ? asset('storage/' . $user->image) : null,
+                'role'   => $user->getRoleNames()->first() ?? 'User',
+                'roles'  => $user->getRoleNames(),
+            ]
+        ]);
+    }
 }

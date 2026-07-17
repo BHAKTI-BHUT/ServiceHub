@@ -1505,6 +1505,34 @@
             "response": []
         },
         {
+            "name": "18. Update Profile",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        { "key": "name", "value": "John Doe Updated", "type": "text" },
+                        { "key": "email", "value": "johndoe@example.com", "type": "text" },
+                        { "key": "mobile", "value": "9876543210", "type": "text" },
+                        { "key": "password", "value": "newpassword123", "type": "text", "description": "Optional" },
+                        { "key": "image", "type": "file", "src": "", "description": "Optional profile photo file" },
+                        { "key": "remove_image", "value": "0", "type": "text", "description": "Send 1 to delete current photo" }
+                    ]
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/profile/update",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "profile", "update"]
+                },
+                "description": "Allows logged-in Customers, Vendors, and Supervisors to update their profile name, email, mobile, password, and upload or delete their profile picture."
+            },
+            "response": []
+        },
+        {
             "name": "Vendor Portal",
             "item": [
                 {

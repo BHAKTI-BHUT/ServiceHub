@@ -14,6 +14,7 @@ Route::post('/webhook/razorpay', [\App\Http\Controllers\Api\RazorpayWebhookContr
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/profile/update', [AuthController::class, 'updateProfile']);
     
     Route::get('/user', function (Request $request) {
         return $request->user();
