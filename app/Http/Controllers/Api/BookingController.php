@@ -76,6 +76,7 @@ class BookingController extends Controller
     {
         $bookings = $request->user()
             ->bookings()
+            ->with(['vendor:id,name,email,mobile,image,phone', 'supervisor:id,name,email,mobile,image,phone'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 

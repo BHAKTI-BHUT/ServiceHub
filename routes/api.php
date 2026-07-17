@@ -43,4 +43,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Add-ons
     Route::get('/addons', [App\Http\Controllers\Api\AddOnController::class, 'index']);
 
+    // Vendor App Endpoints
+    Route::middleware('role:Vendor')->prefix('vendor')->group(function () {
+        Route::get('/dashboard-stats', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'getDashboardStats']);
+        Route::get('/bookings', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'getBookings']);
+        Route::get('/bookings/{id}', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'getBookingDetail']);
+        Route::post('/bookings/{id}/respond', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'respondToBooking']);
+        Route::get('/supervisors', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'getSupervisors']);
+        Route::post('/bookings/{id}/assign-supervisor', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'assignSupervisor']);
+    });
+
 });
