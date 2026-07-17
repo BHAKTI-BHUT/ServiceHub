@@ -100,8 +100,8 @@ class AuthController extends Controller
                 return response()->json(['message' => 'User not found or inactive.'], 404);
             }
 
-            // Automatically assign 'User' role if they don't have it (e.g. registered from web/admin)
-            if (!$user->hasRole('User')) {
+            // Automatically assign 'User' role if they don't have any roles (e.g. guest website checkouts without role)
+            if ($user->roles()->count() === 0) {
                 $role = Role::firstOrCreate(['name' => 'User', 'guard_name' => 'web']);
                 $user->assignRole($role);
             }
@@ -119,6 +119,8 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'mobile' => $user->mobile,
+                    'role' => $user->getRoleNames()->first() ?? 'User',
+                    'roles' => $user->getRoleNames(),
                 ]
             ]);
 

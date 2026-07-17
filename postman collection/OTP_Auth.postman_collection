@@ -285,7 +285,7 @@
                     },
                     "status": "OK",
                     "code": 200,
-                    "body": "{\n    \"success\": true,\n    \"token\": \"1|abcdefghijklmnopqrstuvwxyz1234567890\",\n    \"user\": {\n        \"id\": 1,\n        \"name\": \"Test User\",\n        \"email\": \"testuser@example.com\",\n        \"mobile\": \"9876543210\"\n    }\n}"
+                    "body": "{\n    \"success\": true,\n    \"token\": \"1|abcdefghijklmnopqrstuvwxyz1234567890\",\n    \"user\": {\n        \"id\": 1,\n        \"name\": \"Test User\",\n        \"email\": \"testuser@example.com\",\n        \"mobile\": \"9876543210\",\n        \"role\": \"User\",\n        \"roles\": [\"User\"]\n    }\n}"
                 },
                 {
                     "name": "Invalid OTP",
