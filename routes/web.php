@@ -61,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Vendor Booking Portal ──────────────────────────────
     Route::middleware(['role:Vendor'])->prefix('vendor')->name('vendor.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Backend\DashboardController::class, 'vendorIndex'])->name('dashboard');
+        
         Route::prefix('booking')->name('booking.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Backend\Vendor\VendorBookingController::class, 'index'])->name('index');
             Route::get('/{booking}', [\App\Http\Controllers\Backend\Vendor\VendorBookingController::class, 'show'])->name('show');

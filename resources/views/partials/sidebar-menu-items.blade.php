@@ -41,8 +41,15 @@
     @if(auth()->user() && auth()->user()->hasRole('Vendor'))
     <li class="menu-title" role="presentation">Vendor Panel</li>
     <li class="slide">
+        <a href="{{ route('vendor.dashboard') }}"
+           class="side-menu__item {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}" role="menuitem">
+            <span class="side_menu_icon"><i class="ri-home-2-line"></i></span>
+            <span class="side-menu__label">Dashboard</span>
+        </a>
+    </li>
+    <li class="slide">
         <a href="{{ route('vendor.booking.index') }}"
-           class="side-menu__item {{ request()->routeIs('vendor.booking.*') ? 'active' : '' }}" role="menuitem">
+           class="side-menu__item {{ request()->routeIs('vendor.booking.*') && !request()->routeIs('vendor.dashboard') ? 'active' : '' }}" role="menuitem">
             <span class="side_menu_icon"><i class="ri-calendar-todo-line"></i></span>
             <span class="side-menu__label">My Bookings</span>
         </a>
