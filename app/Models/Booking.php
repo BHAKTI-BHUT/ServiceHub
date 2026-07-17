@@ -65,6 +65,7 @@ class Booking extends Model
         'registration_payment_status',
         'registration_payment_id',
         'registration_order_id',
+        'source',
     ];
 
 

@@ -50,15 +50,23 @@ class FeedbackController extends Controller
         $feedback->delete();
 
         // Delete from CodeIgniter database if customer email exists
-        if ($customerEmail) {
-            try {
-                \DB::connection('mysql')->table('service_hub_web.reviews')
-                    ->where('email', $customerEmail)
-                    ->delete();
-            } catch (\Exception $e) {
-                // Silently log error to not break the page if connection isn't configured
-                \Log::error("Failed to delete review from CI database: " . $e->getMessage());
+        try {
+            $query = \DB::connection('mysql')->table('service_hub_web.reviews');
+            if ($customerEmail) {
+                $query->where('email', $customerEmail);
+            } else {
+                $query->where('r_desc', $feedback->review)->where('stars', $feedback->rating);
             }
+            $query->delete();
+            
+            // Also run a backup delete matching the review content to be absolutely sure
+            \DB::connection('mysql')->table('service_hub_web.reviews')
+                ->where('r_desc', $feedback->review)
+                ->where('stars', $feedback->rating)
+                ->delete();
+        } catch (\Throwable $e) {
+            // Silently log error to not break the page if connection isn't configured
+            \Log::error("Failed to delete review from CI database: " . $e->getMessage());
         }
 
         return response()->json(['success' => true, 'message' => 'Feedback deleted successfully from both Admin and Website.']);

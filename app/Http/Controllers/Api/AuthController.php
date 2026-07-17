@@ -24,11 +24,20 @@ class AuthController extends Controller
     }
 
     /**
+     * Format mobile number to exactly 10 digits.
+     */
+    private function formatMobile(string $mobile): string
+    {
+        $clean = preg_replace('/\D/', '', $mobile);
+        return strlen($clean) > 10 ? substr($clean, -10) : $clean;
+    }
+
+    /**
      * Check if a user with the mobile number exists.
      */
     public function checkMobile(CheckMobileRequest $request)
     {
-        $mobile = $request->validated('mobile');
+        $mobile = $this->formatMobile($request->validated('mobile'));
         $user = $this->userRepository->findByMobile($mobile);
 
         if ($user) {
@@ -54,6 +63,7 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         $data = $request->validated();
+        $data['mobile'] = $this->formatMobile($data['mobile']);
         
         $user = $this->userRepository->create($data);
 
@@ -78,7 +88,7 @@ class AuthController extends Controller
      */
     public function verifyOtp(VerifyOtpRequest $request)
     {
-        $mobile = $request->validated('mobile');
+        $mobile = $this->formatMobile($request->validated('mobile'));
         $otp = $request->validated('otp');
 
         try {
@@ -88,6 +98,12 @@ class AuthController extends Controller
 
             if (!$user || $user->status !== 'active') {
                 return response()->json(['message' => 'User not found or inactive.'], 404);
+            }
+
+            // Automatically assign 'User' role if they don't have it (e.g. registered from web/admin)
+            if (!$user->hasRole('User')) {
+                $role = Role::firstOrCreate(['name' => 'User', 'guard_name' => 'web']);
+                $user->assignRole($role);
             }
 
             // Revoke all existing tokens for simplicity (optional)
@@ -116,7 +132,7 @@ class AuthController extends Controller
      */
     public function resendOtp(ResendOtpRequest $request)
     {
-        $mobile = $request->validated('mobile');
+        $mobile = $this->formatMobile($request->validated('mobile'));
 
         try {
             $this->otpService->generateOtp($mobile);

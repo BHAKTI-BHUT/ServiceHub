@@ -385,10 +385,11 @@ class BookingController extends Controller
                 // Vendor settlement
                 'vendor_commission_amount'=> $vendorCommissionAmount,
                 'vendor_settlement_amount'=> $grandTotal - $vendorCommissionAmount,
-                // Registration Payment fields
+                 // Registration Payment fields
                 'registration_charge'      => $registrationCharge,
                 'registration_payment_status'=> 'pending',
                 'registration_order_id'   => $razorpayOrderId,
+                'source'                  => 'app',
             ]);
 
             // Attach items

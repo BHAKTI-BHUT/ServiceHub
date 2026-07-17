@@ -119,6 +119,7 @@ class BookingRequestController extends Controller
             'registration_payment_status' => $bookingRequest->registration_payment_status ?? 'pending',
             'registration_payment_id' => $bookingRequest->registration_payment_id,
             'registration_order_id' => $bookingRequest->registration_order_id,
+            'source' => $bookingRequest->source ?? 'website',
         ]);
 
         return response()->json([

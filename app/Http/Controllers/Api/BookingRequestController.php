@@ -102,6 +102,7 @@ class BookingRequestController extends Controller
             'shifting_date'     => $request->shifting_date,
             'shifting_time'     => $request->shifting_time,
             'status'            => 'pending',
+            'source'            => 'app',
         ]);
 
         return response()->json([

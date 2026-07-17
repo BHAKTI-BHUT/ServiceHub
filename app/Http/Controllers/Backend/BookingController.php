@@ -23,7 +23,16 @@ class BookingController extends Controller
 
             return datatables()->of($bookings)
                 ->addColumn('customer_name', function ($booking) {
-                    return $booking->customer ? $booking->customer->name : '<span class="text-muted">—</span>';
+                    $name = $booking->customer ? e($booking->customer->name) : '<span class="text-muted">—</span>';
+                    $source = strtolower($booking->source ?? 'admin');
+                    if ($source === 'app') {
+                        $badge = '<span class="badge bg-info-focus text-info mt-1 d-inline-block fs-10" style="padding: 2px 6px;"><i class="ri-smartphone-line align-middle me-1"></i>App</span>';
+                    } elseif ($source === 'website') {
+                        $badge = '<span class="badge bg-success-focus text-success mt-1 d-inline-block fs-10" style="padding: 2px 6px;"><i class="ri-global-line align-middle me-1"></i>Website</span>';
+                    } else {
+                        $badge = '<span class="badge bg-secondary-focus text-secondary mt-1 d-inline-block fs-10" style="padding: 2px 6px;"><i class="ri-user-settings-line align-middle me-1"></i>Admin</span>';
+                    }
+                    return '<div>' . $name . '</div>' . $badge;
                 })
                 ->addColumn('customer_mobile', function ($booking) {
                     return $booking->customer ? ($booking->customer->mobile ?? '—') : '—';

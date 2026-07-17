@@ -22,6 +22,7 @@ class BookingRequest extends Model
         'shifting_time',
         'estimated_amount',
         'status',
+        'source',
     ];
 
     /**
