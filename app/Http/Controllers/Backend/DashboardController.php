@@ -13,6 +13,9 @@ class DashboardController extends Controller
         if ($user && $user->hasRole('Vendor')) {
             return redirect()->route('vendor.dashboard');
         }
+        if ($user && $user->hasRole('Superviser')) {
+            return redirect()->route('supervisor.dashboard');
+        }
 
         $allowedPages = ['dashboard'];
 
@@ -54,5 +57,19 @@ class DashboardController extends Controller
         ];
 
         return view('Backend.Vendor.dashboard', compact('stats'));
+    }
+
+    public function supervisorIndex()
+    {
+        $user = auth()->user();
+        $stats = [
+            'total_bookings'     => \App\Models\Booking::where('supervisor_id', $user->id)->count(),
+            'pending_requests'   => \App\Models\Booking::where('supervisor_id', $user->id)->where('supervisor_acceptance_status', 'pending')->count(),
+            'accepted_bookings'  => \App\Models\Booking::where('supervisor_id', $user->id)->where('supervisor_acceptance_status', 'accepted')->count(),
+            'completed_bookings' => \App\Models\Booking::where('supervisor_id', $user->id)->where('status', 'completed')->count(),
+            'active_bookings'    => \App\Models\Booking::where('supervisor_id', $user->id)->where('status', 'in_progress')->count(),
+        ];
+
+        return view('Backend.Supervisor.dashboard', compact('stats'));
     }
 }

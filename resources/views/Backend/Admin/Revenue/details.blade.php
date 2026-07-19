@@ -214,6 +214,11 @@
                 </div>
             </div>
             <div class="hero-actions">
+                @if(!$remainPaid)
+                    <button class="hero-btn solid btn-record-payment" data-url="{{ route('admin.booking.record-payment', $booking->id) }}" style="background-color: #28a745; border-color: #28a745; cursor: pointer; color: #fff;">
+                        <i class="ri-check-line"></i> Record Payment Paid
+                    </button>
+                @endif
                 <a href="{{ route('admin.revenue.invoice', $booking->id) }}" target="_blank" class="hero-btn solid">
                     <i class="ri-file-list-3-line"></i> Print Invoice
                 </a>
@@ -258,6 +263,13 @@
                         <span style="color:#d97706;">⏳ Pending</span>
                     @endif
                 </div>
+            </div>
+        </div>
+        <div class="pay-tile" style="background:#fffbeb; border:1px solid #fef3c7;">
+            <div class="pay-tile-icon" style="color:#d97706;"><i class="ri-key-2-fill"></i></div>
+            <div>
+                <div class="pay-tile-label" style="color:#b45309;">Shifting OTP</div>
+                <div class="pay-tile-value" style="color:#b45309; font-family:monospace; letter-spacing:1px;">{{ $booking->pickup_otp ?? 'N/A' }}</div>
             </div>
         </div>
     </div>
@@ -433,4 +445,27 @@
 
     </div>
 </div>
+@endsection
+
+@section('js')
+<script>
+    $(document).ready(function() {
+        $(document).on('click', '.btn-record-payment', function() {
+            var url = $(this).data('url');
+            if (!confirm('Are you sure you want to record the remaining payment as paid directly to admin?')) return;
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(resp) {
+                    showToast(resp.message, 'success');
+                    setTimeout(() => location.reload(), 1200);
+                },
+                error: function(xhr) {
+                    showToast(xhr.responseJSON?.message || 'Failed to record payment.', 'danger');
+                }
+            });
+        });
+    });
+</script>
 @endsection

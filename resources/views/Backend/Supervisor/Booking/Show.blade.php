@@ -139,6 +139,24 @@
             </div>
         </div>
 
+        {{-- Box Photo Proofs --}}
+        @if(!empty($booking->box_photos))
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-gallery-line text-primary me-2"></i>Uploaded Box Photo Proofs</h5></div>
+            <div class="card-body">
+                <div class="row g-2">
+                    @foreach($booking->box_photos as $photo)
+                    <div class="col-6 col-md-3">
+                        <a href="{{ asset($photo) }}" target="_blank">
+                            <img src="{{ asset($photo) }}" class="img-fluid rounded border" style="height:100px; width:100%; object-fit:cover;">
+                        </a>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
+
         {{-- Tracking Timeline --}}
         <div class="card mb-0">
             <div class="card-header"><h5 class="card-title mb-0">Tracking Progress</h5></div>
@@ -153,11 +171,14 @@
                             'trip_started'         => 'Trip Started',
                             'shifting_started'     => 'Shifting Started',
                             'pickup_completed'     => 'Pickup Done',
-                            'completed'            => 'Completed'
+                            'shifting_completed'   => 'Completed'
                         ];
                         $keys = array_keys($statusOrder);
                         $currentIdx = array_search($booking->tracking_status, $keys);
-                        if ($currentIdx === false) $currentIdx = 0;
+                        if ($currentIdx === false) {
+                            if ($booking->tracking_status === 'completed') $currentIdx = 5;
+                            else $currentIdx = 0;
+                        }
                     @endphp
                     <div class="d-flex justify-content-between align-items-center position-relative mb-4" style="margin-top:15px;">
                         <div class="progress position-absolute start-0 end-0" style="height:4px;z-index:1;top:50%;transform:translateY(-50%);">
@@ -228,15 +249,60 @@
                                 <i class="ri-roadster-line me-1"></i>Start Trip (Vehicle Departed)
                             </button>
                         @elseif($booking->tracking_status === 'trip_started')
-                            <button class="btn btn-warning btn-action" id="btn-start-shifting" data-id="{{ $booking->id }}" data-url="{{ route('supervisor.booking.startShifting', $booking->id) }}">
-                                <i class="ri-archive-stack-line me-1"></i>Start Shifting
-                            </button>
-                        @elseif($booking->status === 'in_progress')
-                            <button class="btn btn-success btn-action" id="btn-complete" data-id="{{ $booking->id }}" data-url="{{ route('supervisor.booking.completeShifting', $booking->id) }}">
-                                <i class="ri-checkbox-circle-line me-1"></i>Mark Shifting Completed
-                            </button>
-                        @elseif($booking->status === 'completed')
-                            <div class="alert alert-success text-center mb-0 py-2 fs-12"><i class="ri-medal-line me-1"></i>Shifting is Completed!</div>
+                            <!-- OTP verification to start shifting -->
+                            <div class="p-3 border rounded bg-white text-start">
+                                <h6 class="fw-semibold mb-2 text-dark"><i class="ri-lock-line text-warning me-1"></i> Verify Customer OTP</h6>
+                                <p class="text-muted fs-11 mb-3">Ask customer for the OTP to start shifting/pickup.</p>
+                                <div class="mb-3">
+                                    <input type="text" id="otp-input" class="form-control form-control-sm text-center font-monospace fw-bold fs-16" placeholder="Enter 4-Digit OTP" maxlength="4" style="letter-spacing: 4px;">
+                                </div>
+                                <button class="btn btn-warning btn-sm w-100" id="btn-verify-otp" data-id="{{ $booking->id }}" data-url="{{ route('supervisor.booking.verifyOtp', $booking->id) }}">
+                                    <i class="ri-shield-keyhole-line me-1"></i>Verify & Start Shifting
+                                </button>
+                            </div>
+                        @elseif($booking->tracking_status === 'shifting_started')
+                            <!-- Proof uploads (photos) to mark pickup completed -->
+                            <div class="p-3 border rounded bg-white text-start">
+                                <h6 class="fw-semibold mb-2 text-dark"><i class="ri-camera-line text-primary me-1"></i> Upload Box Photo Proofs</h6>
+                                <p class="text-muted fs-11 mb-3">Select photos of packed/loaded boxes to mark pickup as completed.</p>
+                                <form id="proof-upload-form" enctype="multipart/form-data">
+                                    @csrf
+                                    <input type="file" name="box_photos[]" class="form-control form-control-sm mb-3" multiple accept="image/*" required>
+                                    <button type="submit" class="btn btn-primary btn-sm w-100" id="btn-upload-proof" data-url="{{ route('supervisor.booking.uploadProof', $booking->id) }}">
+                                        <i class="ri-upload-cloud-line me-1"></i>Upload & Complete Pickup
+                                    </button>
+                                </form>
+                            </div>
+                        @elseif($booking->tracking_status === 'pickup_completed')
+                            <!-- Travel to drop location done, unloading, setup, and payment step -->
+                            <div class="p-3 border rounded bg-white text-start">
+                                <h6 class="fw-semibold mb-2 text-dark"><i class="ri-map-pin-5-line text-danger me-1"></i> Unload & Setup Items</h6>
+                                <p class="text-muted fs-11 mb-3">Deliver to drop location and arrange all customer products. Then confirm payment.</p>
+                                
+                                @if($booking->remaining_payment_status === 'paid')
+                                    <div class="alert alert-success py-2 fs-12 mb-3">
+                                        <i class="ri-checkbox-circle-line me-1"></i><strong>Payment Verified!</strong> Customer has paid online / direct to Admin.
+                                    </div>
+                                    <button class="btn btn-success btn-sm w-100 btn-action" id="btn-complete-admin" data-id="{{ $booking->id }}" data-url="{{ route('supervisor.booking.completeShifting', $booking->id) }}">
+                                        <i class="ri-check-double-line me-1"></i>Mark Shifting Completed
+                                    </button>
+                                @else
+                                    <div class="alert alert-warning py-2 fs-12 mb-3">
+                                        <i class="ri-information-line me-1"></i><strong>Remaining Payment Pending:</strong> ₹{{ number_format($booking->remaining_amount, 2) }}
+                                    </div>
+                                    <button class="btn btn-success btn-sm w-100 btn-action" id="btn-collect-cash" data-id="{{ $booking->id }}" data-url="{{ route('supervisor.booking.collectCash', $booking->id) }}">
+                                        <i class="ri-money-rupee-circle-line me-1"></i>Collect Cash & Complete Shifting
+                                    </button>
+                                    <p class="text-center text-muted fs-10 mt-2 mb-0">Note: Vendor wallet will be debited 20% platform fee.</p>
+                                @endif
+                            </div>
+                        @elseif($booking->status === 'completed' || $booking->tracking_status === 'shifting_completed')
+                            <div class="alert alert-success text-center mb-0 py-2 fs-12">
+                                <i class="ri-medal-line me-1"></i><strong>Shifting is Completed!</strong>
+                                @if($booking->payment_method)
+                                    <div class="mt-1 small text-muted">Payment Mode: {{ ucfirst($booking->payment_method) }}</div>
+                                @endif
+                            </div>
                         @else
                             <div class="alert alert-light text-center mb-0 py-2 fs-12 text-muted">No actions available yet. Waiting for booking confirmation.</div>
                         @endif
@@ -355,6 +421,53 @@
             data: { status: 'rejected', _token: CSRF_TOKEN },
             success: function(r) { showToast(r.message, 'danger'); setTimeout(() => location.reload(), 1200); },
             error: function(xhr) { showToast(xhr.responseJSON?.message || 'Failed.', 'danger'); }
+        });
+    });
+
+    // Verify OTP Action
+    $(document).on('click', '#btn-verify-otp', function() {
+        var url = $(this).data('url');
+        var otp = $('#otp-input').val().trim();
+        if (!otp) {
+            showToast('Please enter the customer OTP.', 'danger');
+            return;
+        }
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: { otp: otp, _token: CSRF_TOKEN },
+            success: function(resp) {
+                showToast(resp.message, 'success');
+                setTimeout(() => location.reload(), 1200);
+            },
+            error: function(xhr) {
+                showToast(xhr.responseJSON?.message || 'Verification failed.', 'danger');
+            }
+        });
+    });
+
+    // Upload box photo proof
+    $(document).on('submit', '#proof-upload-form', function(e) {
+        e.preventDefault();
+        var url = $('#btn-upload-proof').data('url');
+        var formData = new FormData(this);
+        
+        $('#btn-upload-proof').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Uploading...');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(resp) {
+                showToast(resp.message, 'success');
+                setTimeout(() => location.reload(), 1200);
+            },
+            error: function(xhr) {
+                showToast(xhr.responseJSON?.message || 'Upload failed.', 'danger');
+                $('#btn-upload-proof').prop('disabled', false).html('<i class="ri-upload-cloud-line me-1"></i>Upload & Complete Pickup');
+            }
         });
     });
 

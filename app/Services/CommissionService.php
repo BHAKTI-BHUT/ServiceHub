@@ -14,20 +14,25 @@ class CommissionService
      */
     public function deductCommission(Booking $booking)
     {
+        $this->processSettlement($booking, 'cash');
+    }
+
+    /**
+     * Process wallet transaction based on payment method.
+     */
+    public function processSettlement(Booking $booking, string $paymentMethod)
+    {
         if (!$booking->vendor_id) {
             return;
         }
 
-        // We only deduct commission if it hasn't been deducted already
-        $alreadyDeducted = WalletTransaction::where('booking_id', $booking->id)
-            ->where('type', 'debit')
-            ->exists();
-
-        if ($alreadyDeducted) {
+        // We only process if transaction hasn't been logged yet for this booking
+        $alreadyProcessed = WalletTransaction::where('booking_id', $booking->id)->exists();
+        if ($alreadyProcessed) {
             return;
         }
 
-        DB::transaction(function () use ($booking) {
+        DB::transaction(function () use ($booking, $paymentMethod) {
             $amount = $booking->amount;
             $commission = $amount * 0.20;
             $settlement = $amount * 0.80;
@@ -36,8 +41,6 @@ class CommissionService
             $booking->update([
                 'vendor_commission_amount' => $commission,
                 'vendor_settlement_amount' => $settlement,
-                'tracking_status' => 'completed',
-                'status' => 'completed',
             ]);
 
             // 2. Fetch or create Vendor's wallet
@@ -46,18 +49,33 @@ class CommissionService
                 ['balance' => 0.00]
             );
 
-            // 3. Deduct commission from wallet balance
-            $wallet->balance -= $commission;
-            $wallet->save();
+            if ($paymentMethod === 'cash') {
+                // Cash payment to supervisor/vendor: deduct 20% commission from wallet balance
+                $wallet->balance -= $commission;
+                $wallet->save();
 
-            // 4. Create wallet transaction log (debit)
-            WalletTransaction::create([
-                'wallet_id' => $wallet->id,
-                'booking_id' => $booking->id,
-                'amount' => -$commission,
-                'type' => 'debit',
-                'description' => '20% platform commission debited for Booking #' . $booking->booking_number,
-            ]);
+                // Create wallet transaction log (debit)
+                WalletTransaction::create([
+                    'wallet_id' => $wallet->id,
+                    'booking_id' => $booking->id,
+                    'amount' => -$commission,
+                    'type' => 'debit',
+                    'description' => '20% platform commission debited (Cash trip) for Booking #' . $booking->booking_number,
+                ]);
+            } elseif ($paymentMethod === 'admin') {
+                // Online/direct payment to admin: credit 80% settlement to wallet balance
+                $wallet->balance += $settlement;
+                $wallet->save();
+
+                // Create wallet transaction log (credit)
+                WalletTransaction::create([
+                    'wallet_id' => $wallet->id,
+                    'booking_id' => $booking->id,
+                    'amount' => $settlement,
+                    'type' => 'credit',
+                    'description' => '80% settlement credited (Admin payment) for Booking #' . $booking->booking_number,
+                ]);
+            }
         });
     }
 }

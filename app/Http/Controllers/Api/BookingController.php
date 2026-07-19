@@ -648,6 +648,62 @@ class BookingController extends Controller
         ], 400);
     }
 
+    public function verifyRemainingPayment(Request $request, $id)
+    {
+        $booking = $request->user()->bookings()->find($id);
+
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking not found.'
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'razorpay_payment_id' => 'required|string',
+            'razorpay_order_id'   => 'required|string',
+            'razorpay_signature'  => 'required|string',
+        ]);
+
+        $keySecret = config('services.razorpay.key_secret');
+
+        // Verify Razorpay Signature
+        $expectedSignature = hash_hmac(
+            'sha256',
+            $validated['razorpay_order_id'] . '|' . $validated['razorpay_payment_id'],
+            $keySecret
+        );
+
+        if (hash_equals($expectedSignature, $validated['razorpay_signature'])) {
+            $booking->update([
+                'remaining_payment_status' => 'paid',
+                'remaining_payment_id'     => $validated['razorpay_payment_id'],
+                'remaining_order_id'       => $validated['razorpay_order_id'],
+            ]);
+
+            \App\Models\OrderTracking::create([
+                'booking_id' => $booking->id,
+                'status'     => $booking->status,
+                'notes'      => 'Remaining payment of Rs. ' . number_format($booking->remaining_amount, 2) . ' verified. Payment completed successfully.',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Remaining payment verified successfully.',
+                'booking' => $booking
+            ]);
+        }
+
+        $booking->update([
+            'remaining_payment_status' => 'failed'
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid payment signature verification failed.'
+        ], 400);
+    }
+
     /**
      * Get the assigned vendor and supervisor details for a booking.
      */

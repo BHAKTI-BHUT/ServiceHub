@@ -67,9 +67,16 @@
     @if(auth()->user() && auth()->user()->hasRole('Superviser'))
     <li class="menu-title" role="presentation">Supervisor Panel</li>
     <li class="slide">
+        <a href="{{ route('supervisor.dashboard') }}"
+           class="side-menu__item {{ request()->routeIs('supervisor.dashboard') ? 'active' : '' }}" role="menuitem">
+            <span class="side_menu_icon"><i class="ri-home-2-line"></i></span>
+            <span class="side-menu__label">Dashboard</span>
+        </a>
+    </li>
+    <li class="slide">
         <a href="{{ route('supervisor.booking.index') }}"
-           class="side-menu__item {{ $isSupervisorActive ? 'active' : '' }}" role="menuitem">
-            <span class="side_menu_icon"><i class="ri-user-star-line"></i></span>
+           class="side-menu__item {{ request()->routeIs('supervisor.booking.*') && !request()->routeIs('supervisor.dashboard') ? 'active' : '' }}" role="menuitem">
+            <span class="side_menu_icon"><i class="ri-calendar-todo-line"></i></span>
             <span class="side-menu__label">My Bookings</span>
         </a>
     </li>

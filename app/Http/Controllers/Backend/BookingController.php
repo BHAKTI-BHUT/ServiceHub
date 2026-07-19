@@ -660,4 +660,66 @@ class BookingController extends Controller
 
         return view('invoices.registration_pdf', compact('booking'));
     }
+
+    /**
+     * Record remaining payment as paid directly to admin.
+     */
+    public function recordPayment(Booking $booking)
+    {
+        if ($booking->remaining_payment_status === 'paid') {
+            return response()->json(['message' => 'Remaining payment is already paid.'], 400);
+        }
+
+        $booking->update([
+            'remaining_payment_status' => 'paid',
+            'payment_method' => 'admin',
+        ]);
+
+        // Process 80% settlement to vendor wallet
+        $commissionService = new \App\Services\CommissionService();
+        $commissionService->processSettlement($booking, 'admin');
+
+        \App\Models\OrderTracking::create([
+            'booking_id' => $booking->id,
+            'status' => 'payment_received',
+            'notes' => 'Remaining payment of ₹' . number_format($booking->remaining_amount, 2) . ' recorded as paid directly to Admin. 80% settlement credited to vendor wallet.',
+        ]);
+
+        return response()->json([
+            'message' => 'Remaining payment recorded successfully! 80% settlement credited to vendor wallet.',
+        ]);
+    }
+
+    /**
+     * Get live location trace coordinates of the supervisor for polling.
+     */
+    public function getLiveLocation(Booking $booking)
+    {
+        $supervisor = $booking->supervisor;
+        if (!$supervisor) {
+            return response()->json(['success' => false, 'message' => 'No supervisor assigned.'], 404);
+        }
+
+        $latest = $booking->locations()->latest()->first();
+        $path = $booking->locations()->orderBy('created_at', 'asc')->get(['latitude', 'longitude', 'created_at']);
+
+        return response()->json([
+            'success' => true,
+            'supervisor' => [
+                'name' => $supervisor->name,
+                'mobile' => $supervisor->mobile,
+                'latitude' => $supervisor->latitude,
+                'longitude' => $supervisor->longitude,
+            ],
+            'latest' => $latest ? [
+                'latitude' => (float)$latest->latitude,
+                'longitude' => (float)$latest->longitude,
+                'updated_at' => $latest->created_at->diffForHumans(),
+            ] : null,
+            'path' => $path->map(fn($loc) => [
+                (float)$loc->latitude,
+                (float)$loc->longitude
+            ])
+        ]);
+    }
 }

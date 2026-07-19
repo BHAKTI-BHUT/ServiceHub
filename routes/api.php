@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{id}/update', [App\Http\Controllers\Api\BookingController::class, 'update']);
     Route::post('/bookings/{id}/cancel', [App\Http\Controllers\Api\BookingController::class, 'cancel']);
     Route::post('/bookings/{id}/verify-registration-payment', [App\Http\Controllers\Api\BookingController::class, 'verifyRegistrationPayment']);
+    Route::post('/bookings/{id}/verify-remaining-payment', [App\Http\Controllers\Api\BookingController::class, 'verifyRemainingPayment']);
     // New endpoints for estimating and creating bookings
     Route::get('/bookings/registration-fee', [App\Http\Controllers\Api\BookingController::class, 'getRegistrationFee']);
     Route::post('/bookings/estimate', [App\Http\Controllers\Api\BookingController::class, 'estimate']);
@@ -52,6 +53,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/bookings/{id}/respond', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'respondToBooking']);
         Route::get('/supervisors', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'getSupervisors']);
         Route::post('/bookings/{id}/assign-supervisor', [\App\Http\Controllers\Api\Vendor\VendorPortalController::class, 'assignSupervisor']);
+    });
+
+    // Supervisor App Endpoints
+    Route::middleware('role:Superviser')->prefix('supervisor')->group(function () {
+        Route::get('/bookings', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'getBookings']);
+        Route::get('/bookings/{id}', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'getBookingDetail']);
+        Route::post('/bookings/{id}/start-trip', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'startTrip']);
+        Route::post('/bookings/{id}/start-shifting', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'startShifting']);
+        Route::post('/bookings/{id}/update-items', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'updateItems']);
+        Route::post('/bookings/{id}/upload-proof', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'uploadProof']);
+        Route::post('/bookings/{id}/complete-shifting', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'completeShifting']);
+        Route::post('/location', [\App\Http\Controllers\Api\Supervisor\SupervisorPortalController::class, 'updateLocation']);
     });
 
 });

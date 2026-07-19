@@ -272,7 +272,7 @@ class SupervisorBookingController extends Controller
     }
 
     /**
-     * Mark shifting as completed and trigger 20% commission deduction.
+     * Mark shifting as completed (when payment has been made directly to Admin).
      */
     public function completeShifting(Booking $booking)
     {
@@ -284,19 +284,159 @@ class SupervisorBookingController extends Controller
             return response()->json(['message' => 'Shifting must be in progress before marking as complete.'], 400);
         }
 
-        // Deduct 20% commission from vendor wallet
-        $commissionService = new CommissionService();
-        $commissionService->deductCommission($booking);
+        if ($booking->remaining_payment_status !== 'paid') {
+            return response()->json(['message' => 'Cannot complete shifting. Remaining payment is pending.'], 400);
+        }
+
+        if ($booking->payment_method !== 'admin') {
+            return response()->json(['message' => 'Invalid payment mode. Use Cash Collection instead.'], 400);
+        }
+
+        $booking->update([
+            'status' => 'completed',
+            'tracking_status' => 'shifting_completed',
+        ]);
 
         \App\Models\OrderTracking::create([
             'booking_id' => $booking->id,
             'status' => 'completed',
-            'notes' => 'Shifting completed by supervisor. 20% commission deducted from vendor wallet.',
+            'notes' => 'Shifting completed by supervisor. Payment made direct to Admin (80% settlement credited to vendor).',
         ]);
 
         return response()->json([
-            'message' => 'Shifting completed successfully! Commission deducted.',
+            'message' => 'Shifting completed successfully!',
             'status'  => 'completed',
+        ]);
+    }
+
+    /**
+     * Verify customer OTP to start shifting process.
+     */
+    public function verifyOtp(Request $request, Booking $booking)
+    {
+        if ($booking->supervisor_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized action.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if ($booking->pickup_otp !== $request->otp) {
+            return response()->json(['message' => 'Invalid OTP. Please enter the correct OTP from the customer.'], 422);
+        }
+
+        $booking->update([
+            'status' => 'in_progress',
+            'tracking_status' => 'shifting_started',
+        ]);
+
+        \App\Models\OrderTracking::create([
+            'booking_id' => $booking->id,
+            'status' => 'shifting_started',
+            'notes' => 'Supervisor verified OTP and started shifting.',
+        ]);
+
+        return response()->json([
+            'message' => 'OTP Verified! Shifting started successfully.',
+            'status' => 'in_progress',
+            'tracking_status' => 'shifting_started',
+        ]);
+    }
+
+    /**
+     * Upload photo proofs of packed boxes.
+     */
+    public function uploadProof(Request $request, Booking $booking)
+    {
+        if ($booking->supervisor_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized action.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'box_photos' => 'required|array',
+            'box_photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 422);
+        }
+
+        $paths = [];
+        if ($request->hasFile('box_photos')) {
+            // Ensure public directory exists
+            $uploadDir = public_path('uploads/box_photos');
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            foreach ($request->file('box_photos') as $file) {
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadDir, $filename);
+                $paths[] = 'uploads/box_photos/' . $filename;
+            }
+        }
+
+        $booking->update([
+            'box_photos' => $paths,
+            'tracking_status' => 'pickup_completed',
+        ]);
+
+        \App\Models\OrderTracking::create([
+            'booking_id' => $booking->id,
+            'status' => 'pickup_completed',
+            'notes' => 'Supervisor uploaded box photo proofs. Pickup completed.',
+        ]);
+
+        return response()->json([
+            'message' => 'Photos uploaded successfully! Pickup marked as completed.',
+            'tracking_status' => 'pickup_completed',
+        ]);
+    }
+
+    /**
+     * Collect cash from customer and complete shifting.
+     */
+    public function collectCash(Booking $booking)
+    {
+        if ($booking->supervisor_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized action.'], 403);
+        }
+
+        if ($booking->status !== 'in_progress') {
+            return response()->json(['message' => 'Shifting must be in progress before completing.'], 400);
+        }
+
+        if ($booking->remaining_payment_status === 'paid') {
+            return response()->json(['message' => 'Remaining payment is already paid.'], 400);
+        }
+
+        // Set payment as paid in cash and complete the booking
+        $booking->update([
+            'remaining_payment_status' => 'paid',
+            'payment_method' => 'cash',
+            'status' => 'completed',
+            'tracking_status' => 'shifting_completed',
+        ]);
+
+        // Deduct 20% platform commission from vendor wallet
+        $commissionService = new CommissionService();
+        $commissionService->processSettlement($booking, 'cash');
+
+        \App\Models\OrderTracking::create([
+            'booking_id' => $booking->id,
+            'status' => 'completed',
+            'notes' => 'Supervisor collected cash payment and completed shifting. 20% platform commission debited from vendor.',
+        ]);
+
+        return response()->json([
+            'message' => 'Cash collected and shifting completed successfully!',
+            'status' => 'completed',
+            'tracking_status' => 'shifting_completed',
         ]);
     }
 }

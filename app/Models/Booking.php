@@ -65,9 +65,17 @@ class Booking extends Model
         'registration_payment_status',
         'registration_payment_id',
         'registration_order_id',
+        'remaining_payment_id',
+        'remaining_order_id',
         'source',
+        'pickup_otp',
+        'box_photos',
+        'payment_method',
     ];
 
+    protected $casts = [
+        'box_photos' => 'array',
+    ];
 
     protected static function boot()
     {
@@ -76,6 +84,9 @@ class Booking extends Model
         static::creating(function ($booking) {
             if (empty($booking->booking_number)) {
                 $booking->booking_number = self::generateUniqueBookingNumber();
+            }
+            if (empty($booking->pickup_otp)) {
+                $booking->pickup_otp = strval(rand(1000, 9999));
             }
         });
     }
@@ -162,5 +173,15 @@ class Booking extends Model
     public function vendorRequests()
     {
         return $this->hasMany(BookingVendorRequest::class, 'booking_id');
+    }
+
+    public function proofs()
+    {
+        return $this->hasMany(BookingProof::class);
+    }
+
+    public function locations()
+    {
+        return $this->hasMany(SupervisorLocation::class);
     }
 }

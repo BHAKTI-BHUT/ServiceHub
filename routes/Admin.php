@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/bookings/total',     [BookingController::class, 'total'])->name('bookings.total');
         Route::get('/bookings/pending',   [BookingController::class, 'pending'])->name('bookings.pending');
         Route::get('/bookings/completed', [BookingController::class, 'completed'])->name('bookings.completed');
+        Route::post('/booking/{booking}/record-payment', [BookingController::class, 'recordPayment'])->name('booking.record-payment');
 
         // Revenue
         Route::get('/revenue', [RevenueController::class, 'index'])->name('revenue');

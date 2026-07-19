@@ -224,6 +224,64 @@
                     @endif
                 </div>
             </div>
+
+            <!-- Live Shifting Tracking Map (Rapido Style) -->
+            @if ($booking->status === 'in_progress' || $booking->tracking_status === 'trip_started' || $booking->tracking_status === 'shifting_started' || $booking->tracking_status === 'pickup_completed' || $booking->tracking_status === 'completed')
+                @if ($booking->supervisor)
+                    <div class="card mt-4">
+                        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                            <h5 class="card-title mb-0 d-flex align-items-center gap-2">
+                                <span class="badge bg-danger-subtle text-danger p-2 rounded-circle"><i class="ri-map-pin-line"></i></span>
+                                Live Supervisor Tracking (Rapido Style)
+                            </h5>
+                            <span class="badge bg-success-focus text-success"><i class="ri-radio-button-line me-1 text-blink"></i>Live</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <!-- Map Container -->
+                            <div id="tracking-map" style="height: 380px; width: 100%;"></div>
+                        </div>
+                        <div class="card-footer bg-light py-2">
+                            <div class="d-flex justify-content-between align-items-center fs-12">
+                                <div>
+                                    <i class="ri-user-star-line me-1 text-primary"></i><strong>Supervisor:</strong> {{ $booking->supervisor->name }} ({{ $booking->supervisor->mobile }})
+                                </div>
+                                <div id="last-updated-text" class="text-muted">
+                                    Awaiting live updates...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endif
+
+            <!-- Shifting Photo Proofs -->
+            @if ($booking->proofs && $booking->proofs->isNotEmpty())
+                <div class="card mt-4">
+                    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0 d-flex align-items-center gap-2">
+                            <span class="badge bg-success-subtle text-success p-2 rounded-circle"><i class="ri-image-line"></i></span>
+                            Shifting Photo Proofs
+                        </h5>
+                        <span class="badge bg-primary">{{ $booking->proofs->count() }} Photos</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @foreach ($booking->proofs as $proof)
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <div class="card border shadow-none mb-0 overflow-hidden position-relative" style="border-radius: 8px;">
+                                        <a href="{{ asset($proof->file_path) }}" target="_blank">
+                                            <img src="{{ asset($proof->file_path) }}" class="img-fluid" style="height: 120px; width: 100%; object-fit: cover;" alt="Proof">
+                                        </a>
+                                        <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white py-1 px-2 text-center fs-10 text-uppercase fw-bold">
+                                            {{ $proof->type }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <!-- Right Customer Details & Action Column -->
@@ -298,6 +356,52 @@
                             <i class="ri-file-download-line me-1"></i>Download Registration Invoice
                         </a>
                     </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Shifting OTP Card -->
+            <div class="card mb-4 border shadow-none">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0 fs-13"><i class="ri-key-2-line me-1 text-warning"></i>Shifting OTP</h6>
+                    <span class="badge bg-warning-focus text-warning">Security Verification</span>
+                </div>
+                <div class="card-body p-3 text-center">
+                    <h3 class="mb-0 fw-bold font-monospace text-dark" style="letter-spacing: 2px;">{{ $booking->pickup_otp ?? 'N/A' }}</h3>
+                    <p class="text-muted fs-11 mt-1 mb-0">Provide this OTP to the customer. The supervisor will verify this OTP in their portal to start the pickup process.</p>
+                </div>
+            </div>
+
+            <!-- Remaining Payment Card -->
+            <div class="card mb-4 border shadow-none">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0 fs-13"><i class="ri-money-rupee-circle-line me-1 text-success"></i>Remaining Balance</h6>
+                    @php
+                        $remainPaidBadge = match($booking->remaining_payment_status) {
+                            'paid' => 'bg-success-focus text-success',
+                            default => 'bg-danger-focus text-danger',
+                        };
+                    @endphp
+                    <span class="badge {{ $remainPaidBadge }}">{{ ucfirst($booking->remaining_payment_status ?? 'pending') }}</span>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="fs-12 text-muted">Remaining Balance</span>
+                        <span class="fs-12 fw-semibold">₹{{ number_format($booking->remaining_amount, 2) }}</span>
+                    </div>
+                    @if($booking->payment_method)
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="fs-12 text-muted">Payment Mode</span>
+                        <span class="fs-12 fw-semibold text-success">{{ ucfirst($booking->payment_method) }}</span>
+                    </div>
+                    @endif
+                    
+                    @if($booking->remaining_payment_status !== 'paid')
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-success w-100 btn-record-payment" data-url="{{ route('admin.booking.record-payment', $booking->id) }}">
+                                <i class="ri-check-line me-1"></i>Record Remaining Payment as Paid
+                            </button>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -397,4 +501,129 @@
         </div>
     </div>
 
+@endsection
+
+@section('css')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .text-blink {
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+    </style>
+@endsection
+
+@section('js')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Record Payment Action
+            $(document).on('click', '.btn-record-payment', function() {
+                var url = $(this).data('url');
+                if (!confirm('Are you sure you want to record the remaining payment as paid directly to admin?')) return;
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: { _token: '{{ csrf_token() }}' },
+                    success: function(resp) {
+                        showToast(resp.message, 'success');
+                        setTimeout(() => location.reload(), 1200);
+                    },
+                    error: function(xhr) {
+                        showToast(xhr.responseJSON?.message || 'Failed to record payment.', 'danger');
+                    }
+                });
+            });
+            @if ($booking->supervisor && ($booking->pickup_latitude && $booking->pickup_longitude))
+                // Initialize Map
+                var map = L.map('tracking-map').setView([{{ $booking->pickup_latitude }}, {{ $booking->pickup_longitude }}], 13);
+                
+                // Add OpenStreetMap Tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                // Custom DivIcons
+                var pickupIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: "<div style='background-color:#2e7d32; color:#fff; width:30px; height:30px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.3);'>P</div>",
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                var dropIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: "<div style='background-color:#d32f2f; color:#fff; width:30px; height:30px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.3);'>D</div>",
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                var supervisorIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: "<div style='background-color:#0288d1; color:#fff; width:34px; height:34px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.5);'><i class='ri-truck-fill' style='font-size:16px;'></i></div>",
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17]
+                });
+
+                // Add Pickup and Drop Markers
+                var pickupMarker = L.marker([{{ $booking->pickup_latitude }}, {{ $booking->pickup_longitude }}], { icon: pickupIcon })
+                    .addTo(map)
+                    .bindPopup("<b>Pickup Location</b><br>{{ addslashes($booking->pickup_location) }}");
+
+                var dropMarker = L.marker([{{ $booking->drop_latitude }}, {{ $booking->drop_longitude }}], { icon: dropIcon })
+                    .addTo(map)
+                    .bindPopup("<b>Drop Location</b><br>{{ addslashes($booking->drop_location) }}");
+
+                var boundsGroup = new L.featureGroup([pickupMarker, dropMarker]);
+                map.fitBounds(boundsGroup.getBounds().pad(0.1));
+
+                // Initialize Trail Polyline
+                var polyline = L.polyline([], {color: '#e31e24', weight: 4, opacity: 0.8, dashArray: '5, 10'}).addTo(map);
+                var supervisorMarker = null;
+
+                function updateMapTrace(path, latest, supervisor) {
+                    if (path && path.length > 0) {
+                        polyline.setLatLngs(path);
+                    }
+
+                    if (latest) {
+                        var latLng = [latest.latitude, latest.longitude];
+                        if (!supervisorMarker) {
+                            supervisorMarker = L.marker(latLng, { icon: supervisorIcon }).addTo(map);
+                        } else {
+                            supervisorMarker.setLatLng(latLng);
+                        }
+                        supervisorMarker.bindPopup("<b>" + supervisor.name + " (Supervisor)</b><br>Updated " + latest.updated_at).openPopup();
+                        
+                        // Centering/Panning map view
+                        map.panTo(latLng);
+                        
+                        $("#last-updated-text").html("<i class='ri-time-line me-1'></i>Updated: " + latest.updated_at);
+                    }
+                }
+
+                // Initial poll load
+                function pollLocation() {
+                    $.ajax({
+                        url: '{{ route("booking.location", $booking->id) }}',
+                        method: 'GET',
+                        success: function(resp) {
+                            if (resp.success) {
+                                updateMapTrace(resp.path, resp.latest, resp.supervisor);
+                            }
+                        }
+                    });
+                }
+
+                pollLocation();
+                // Poll every 10 seconds
+                setInterval(pollLocation, 10000);
+            @endif
+        });
+    </script>
 @endsection

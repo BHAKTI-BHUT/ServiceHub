@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{booking}/complete', [BookingController::class, 'complete'])->name('complete');
         Route::post('/{booking}/assign-vendor', [BookingController::class, 'assignVendor'])->name('assignVendor');
         Route::get('/{booking}/registration-invoice', [BookingController::class, 'registrationInvoice'])->name('registration-invoice');
+        Route::get('/{booking}/location', [BookingController::class, 'getLiveLocation'])->name('location');
     });
 
     // ── Vendor Booking Portal ──────────────────────────────
@@ -77,11 +78,16 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Supervisor Booking Portal ───────────────────────────
     Route::middleware(['role:Superviser'])->prefix('supervisor')->name('supervisor.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Backend\DashboardController::class, 'supervisorIndex'])->name('dashboard');
+        
         Route::prefix('booking')->name('booking.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'index'])->name('index');
             Route::get('/{booking}', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'show'])->name('show');
             Route::post('/{booking}/respond', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'respond'])->name('respond');
             Route::post('/{booking}/start-trip', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'startTrip'])->name('startTrip');
+            Route::post('/{booking}/verify-otp', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'verifyOtp'])->name('verifyOtp');
+            Route::post('/{booking}/upload-proof', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'uploadProof'])->name('uploadProof');
+            Route::post('/{booking}/collect-cash', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'collectCash'])->name('collectCash');
             Route::post('/{booking}/start-shifting', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'startShifting'])->name('startShifting');
             Route::post('/{booking}/update-items', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'updateItems'])->name('updateItems');
             Route::post('/{booking}/complete-shifting', [\App\Http\Controllers\Backend\Supervisor\SupervisorBookingController::class, 'completeShifting'])->name('completeShifting');

@@ -1651,6 +1651,167 @@
                     "response": []
                 }
             ]
+        },
+        {
+            "name": "Supervisor Portal",
+            "item": [
+                {
+                    "name": "1. Get Assigned Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings?status=active",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings"],
+                            "query": [
+                                { "key": "status", "value": "active", "description": "Optional: active, completed, cancelled" }
+                            ]
+                        },
+                        "description": "Fetch bookings list assigned to the authenticated supervisor."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Get Booking Detail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}"]
+                        },
+                        "description": "Fetch detailed info of an assigned booking."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Start Trip",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/start-trip",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "start-trip"]
+                        },
+                        "description": "Mark the vehicle as departed and advance status to trip_started."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "4. Start Shifting",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/start-shifting",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "start-shifting"]
+                        },
+                        "description": "Mark the shifting process as active, moving tracking_status to shifting_started."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Update Shifting Items/Addons",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"items\": [\n        {\"id\": 1, \"quantity\": 2},\n        {\"id\": 5, \"quantity\": 1}\n    ],\n    \"addons\": [2, 3]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/update-items",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "update-items"]
+                        },
+                        "description": "Update shifting items or addons dynamically. Automatically recalculates remaining balance."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "6. Upload Photo Proofs",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                { "key": "images[]", "type": "file", "src": [] },
+                                { "key": "type", "value": "pickup", "type": "text" }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/upload-proof",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "upload-proof"]
+                        },
+                        "description": "Upload multiple shifting photo proofs. Uploading type 'pickup' automatically advances status to pickup_completed."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "7. Update Live Location",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"latitude\": 28.6258,\n    \"longitude\": 77.3792,\n    \"booking_id\": \"{{booking_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/location",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "location"]
+                        },
+                        "description": "Update supervisor coordinates live tracking trail."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "8. Complete Shifting",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/complete-shifting",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "complete-shifting"]
+                        },
+                        "description": "Complete the shifting job. Validates that the customer has completed payment."
+                    },
+                    "response": []
+                }
+            ]
         }
     ]
 }
