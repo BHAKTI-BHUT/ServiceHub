@@ -138,6 +138,17 @@
     </li>
     @endcan
 
+    {{-- Refund Requests --}}
+    @canany(['view booking', 'view revenue'])
+    <li class="slide">
+        <a href="{{ route('admin.refunds') }}"
+           class="side-menu__item {{ request()->routeIs('admin.refunds') ? 'active' : '' }}" role="menuitem">
+            <span class="side_menu_icon"><i class="ri-refresh-line"></i></span>
+            <span class="side-menu__label">Refund Requests</span>
+        </a>
+    </li>
+    @endcanany
+
     {{-- ── MASTER MANAGEMENT ───────────────────────────────── --}}
     @canany(['view vehicle', 'view category', 'view item', 'view addon'])
     <li class="menu-title" role="presentation">Master Management</li>

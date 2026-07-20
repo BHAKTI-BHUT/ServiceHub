@@ -14,6 +14,7 @@ use App\Http\Controllers\Backend\Admin\ReportController;
 use App\Http\Controllers\Backend\Admin\ItemSizeController;
 use App\Http\Controllers\Backend\Admin\AddOnCategoryController;
 use App\Http\Controllers\Backend\VendorSupervisorController;
+use App\Http\Controllers\Backend\Admin\RefundRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -120,5 +121,12 @@ Route::middleware(['auth'])->group(function () {
 
         // Reports
         Route::get('/reports', [ReportController::class, 'index'])->name('reports');
+
+        // Refund Requests
+        Route::get('/refunds', [RefundRequestController::class, 'index'])->name('refunds');
+        Route::get('/refunds/{refund}', [RefundRequestController::class, 'show'])->name('refunds.show');
+        Route::post('/refunds/{refund}/approve', [RefundRequestController::class, 'approve'])->name('refunds.approve');
+        Route::post('/refunds/{refund}/reject', [RefundRequestController::class, 'reject'])->name('refunds.reject');
+        Route::post('/refunds/{refund}/process', [RefundRequestController::class, 'process'])->name('refunds.process');
     });
 });
