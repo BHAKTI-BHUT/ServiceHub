@@ -15,7 +15,7 @@ use Yajra\DataTables\Facades\DataTables;
 class RefundRequestController extends Controller
 {
     /**
-     * Display a listing of refund requests.
+     * Display a listing of refund requests.    
      */
     public function index(Request $request)
     {
