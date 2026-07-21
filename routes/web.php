@@ -253,5 +253,40 @@ Route::get('/run-artisan-clear-config', function () {
     }
 });
 
+Route::get('/run-artisan-migrate', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+
+        return "<div style='font-family:sans-serif;padding:20px;'>"
+             . "<h2 style='color:#4CAF50;'>✅ Database Migration Executed Successfully!</h2>"
+             . "<pre style='background:#1e1e1e;color:#d4d4d4;padding:15px;border-radius:6px;overflow:auto;'>{$output}</pre>"
+             . "</div>";
+    } catch (\Exception $e) {
+        return "<h2>❌ Migration Error:</h2><p>" . $e->getMessage() . "</p>";
+    }
+});
+
+Route::get('/run-artisan-seed', function (\Illuminate\Http\Request $request) {
+    try {
+        $params = ['--force' => true];
+        if ($request->has('class')) {
+            $params['--class'] = $request->input('class');
+        }
+
+        \Illuminate\Support\Facades\Artisan::call('db:seed', $params);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+
+        $seederName = $request->input('class', 'DatabaseSeeder');
+
+        return "<div style='font-family:sans-serif;padding:20px;'>"
+             . "<h2 style='color:#4CAF50;'>🌱 Database Seeder ({$seederName}) Executed Successfully!</h2>"
+             . "<pre style='background:#1e1e1e;color:#d4d4d4;padding:15px;border-radius:6px;overflow:auto;'>{$output}</pre>"
+             . "</div>";
+    } catch (\Exception $e) {
+        return "<h2>❌ Seeder Error:</h2><p>" . $e->getMessage() . "</p>";
+    }
+});
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/Admin.php';
