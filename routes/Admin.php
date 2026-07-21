@@ -39,7 +39,9 @@ Route::middleware(['auth'])->group(function () {
     // ── Dashboard (main) ───────────────────────────────────
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::prefix('admin')->name('admin.')->group(function () {
+    $adminPrefix = (request()->getBaseUrl() === '/admin') ? '' : 'admin';
+
+    Route::prefix($adminPrefix)->name('admin.')->group(function () {
 
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
