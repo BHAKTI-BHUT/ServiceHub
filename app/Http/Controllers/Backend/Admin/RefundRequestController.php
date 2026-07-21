@@ -219,8 +219,8 @@ class RefundRequestController extends Controller
                 ]);
             }
 
-            $keyId = env('RAZORPAY_KEY_ID', 'rzp_test_TA6iZxnniOKbaO');
-            $keySecret = env('RAZORPAY_KEY_SECRET', 'DPbGYDstDJ3cyMiUOSmtoJH4');
+            $keyId = env('RAZORPAY_KEY_ID', 'rzp_live_TFidvL3276AhNp');
+            $keySecret = env('RAZORPAY_KEY_SECRET', 'mlbDSjCya1UISGeqITg0b5r0');
             
             // Amount in paise
             $amountInPaise = round($refund->approved_refund_amount * 100);
