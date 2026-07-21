@@ -186,5 +186,72 @@ Route::get('/admin/run-logs', function () {
          . "</pre>";
 });
 
+// ─── Direct URL Helpers for Shared Hosting (Storage Link & Cache Clear) ───
+Route::get('/run-artisan-storage-link', function () {
+    try {
+        $target = storage_path('app/public');
+        $shortcut = public_path('storage');
+
+        if (file_exists($shortcut)) {
+            return "<h2>✅ Storage link already exists!</h2><p>Shortcut Path: {$shortcut}</p>";
+        }
+
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        $output = \Illuminate\Support\Facades\Artisan::output();
+
+        return "<h2>✅ Storage Link Created Successfully!</h2><pre style='background:#f4f4f4;padding:15px;border-left:4px solid #4CAF50;'>{$output}</pre>";
+    } catch (\Exception $e) {
+        try {
+            $target = storage_path('app/public');
+            $shortcut = public_path('storage');
+            symlink($target, $shortcut);
+            return "<h2>✅ Storage Link Created via Symlink Fallback!</h2>";
+        } catch (\Exception $ex) {
+            return "<h2>❌ Error Creating Storage Link:</h2><p>" . $e->getMessage() . "</p>";
+        }
+    }
+});
+
+Route::get('/run-artisan-clear-cache', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('config:cache');
+        $config = \Illuminate\Support\Facades\Artisan::output();
+
+        \Illuminate\Support\Facades\Artisan::call('route:cache');
+        $route = \Illuminate\Support\Facades\Artisan::output();
+
+        \Illuminate\Support\Facades\Artisan::call('view:cache');
+        $view = \Illuminate\Support\Facades\Artisan::output();
+
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        $cache = \Illuminate\Support\Facades\Artisan::output();
+
+        return "<div style='font-family:sans-serif;padding:20px;'>"
+             . "<h2 style='color:#4CAF50;'>🚀 Cache Optimised & Cached Successfully!</h2>"
+             . "<p><strong>Config Cache:</strong> {$config}</p>"
+             . "<p><strong>Route Cache:</strong> {$route}</p>"
+             . "<p><strong>View Cache:</strong> {$view}</p>"
+             . "<p><strong>App Cache:</strong> {$cache}</p>"
+             . "</div>";
+    } catch (\Exception $e) {
+        return "<h2>❌ Cache Error:</h2><p>" . $e->getMessage() . "</p>";
+    }
+});
+
+Route::get('/run-artisan-clear-config', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+
+        return "<div style='font-family:sans-serif;padding:20px;'>"
+             . "<h2 style='color:#2196F3;'>🧹 All Caches Cleared! (config, route, view, cache)</h2>"
+             . "</div>";
+    } catch (\Exception $e) {
+        return "<h2>❌ Error:</h2><p>" . $e->getMessage() . "</p>";
+    }
+});
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/Admin.php';
