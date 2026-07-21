@@ -190,28 +190,30 @@ Route::get('/admin/run-logs', function () {
          . "</pre>";
 });
 
-// ─── Direct URL Helpers for Shared Hosting (Storage Link & Cache Clear) ───
 Route::get('/run-artisan-storage-link', function () {
+    $target = storage_path('app/public');
+    $shortcut = public_path('storage');
+
+    if (file_exists($shortcut)) {
+        return "<h2>✅ Storage link already exists!</h2><p>Shortcut Path: {$shortcut}</p>";
+    }
+
     try {
-        $target = storage_path('app/public');
-        $shortcut = public_path('storage');
-
-        if (file_exists($shortcut)) {
-            return "<h2>✅ Storage link already exists!</h2><p>Shortcut Path: {$shortcut}</p>";
+        // Try direct PHP symlink first (avoids exec() calls)
+        if (symlink($target, $shortcut)) {
+            return "<h2>✅ Storage Link Created Successfully via PHP symlink()!</h2>";
         }
-
-        \Illuminate\Support\Facades\Artisan::call('storage:link');
-        $output = \Illuminate\Support\Facades\Artisan::output();
-
-        return "<h2>✅ Storage Link Created Successfully!</h2><pre style='background:#f4f4f4;padding:15px;border-left:4px solid #4CAF50;'>{$output}</pre>";
-    } catch (\Exception $e) {
+        throw new \Exception("PHP symlink() returned false.");
+    } catch (\Throwable $e) {
         try {
-            $target = storage_path('app/public');
-            $shortcut = public_path('storage');
-            symlink($target, $shortcut);
-            return "<h2>✅ Storage Link Created via Symlink Fallback!</h2>";
-        } catch (\Exception $ex) {
-            return "<h2>❌ Error Creating Storage Link:</h2><p>" . $e->getMessage() . "</p>";
+            // Fallback to Artisan (might fail if exec is disabled, but worth a try)
+            \Illuminate\Support\Facades\Artisan::call('storage:link');
+            $output = \Illuminate\Support\Facades\Artisan::output();
+            return "<h2>✅ Storage Link Created via Artisan!</h2><pre>{$output}</pre>";
+        } catch (\Throwable $ex) {
+            return "<h2>❌ Error Creating Storage Link:</h2>"
+                 . "<p><strong>Direct PHP symlink() failed:</strong> " . $e->getMessage() . "</p>"
+                 . "<p><strong>Artisan storage:link failed:</strong> " . $ex->getMessage() . "</p>";
         }
     }
 });
