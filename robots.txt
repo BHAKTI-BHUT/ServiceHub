@@ -1,0 +1,4 @@
+user-agent: *
+disallow: /error/
+
+sitemap:https://bhandaripackersandmovers.in/sitemap.xml

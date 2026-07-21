@@ -25,9 +25,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ── Force HTTPS on production (SSL) ─────────────────────────────────
+        // ── Force HTTPS on pr
+        // oduction (SSL) ─────────────────────────────────
         if ($this->app->environment('production')) {
-            URL::forceScheme('https');
+            try {
+                if ($this->app->bound('request') && $this->app->make('request') instanceof \Illuminate\Http\Request) {
+                    URL::forceScheme('https');
+                }
+            } catch (\Throwable $e) {
+                // Safe fallback if booted without a valid request context (e.g. CLI or custom scripts)
+            }
         }
 
         // ── Admin bypass ────────────────────────────────────────────────────

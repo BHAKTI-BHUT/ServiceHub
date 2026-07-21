@@ -22,10 +22,10 @@ routes
 17.07
 
 
-app
-resources
-database
-public
+app  ---
+resources --- 
+database ---
+public --- 
 routes
-config
+config ---
 model
