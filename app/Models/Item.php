@@ -12,8 +12,14 @@ class Item extends Model
     protected $fillable = [
         'item_name',
         'item_size_id',
+        'score_point',
         'status',
     ];
+
+    public function getVolumeScoreAttribute()
+    {
+        return $this->score_point ?? 0;
+    }
 
     public function size()
     {

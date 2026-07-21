@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,17 +24,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ── Force HTTPS on pr
-        // oduction (SSL) ─────────────────────────────────
-        if ($this->app->environment('production')) {
-            try {
-                if ($this->app->bound('request') && $this->app->make('request') instanceof \Illuminate\Http\Request) {
-                    URL::forceScheme('https');
-                }
-            } catch (\Throwable $e) {
-                // Safe fallback if booted without a valid request context (e.g. CLI or custom scripts)
-            }
-        }
+        // ── Force HTTPS & Root URL ───────────────────────────────────────────
+        // NOTE: URL::forceRootUrl() internally resolves the 'url' service from
+        // the container (via RoutingServiceProvider) which requires 'request' to
+        // be bound — but 'request' is NOT available during BootProviders phase.
+        // HTTPS forcing is now handled via middleware in bootstrap/app.php.
+        // (trustProxies + ForceHttpsUrl middleware)
 
         // ── Admin bypass ────────────────────────────────────────────────────
         // If the logged-in user has the "Admin" role, allow everything.

@@ -18,7 +18,10 @@ class ItemController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('size_name', function ($row) {
-                    return $row->size ? $row->size->size_name . ' (' . $row->size->volume_score . ' pts)' : '-';
+                    return $row->size ? $row->size->size_name : '-';
+                })
+                ->addColumn('score_point', function ($row) {
+                    return '<span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1">' . ($row->score_point ?? 0) . ' pts</span>';
                 })
                 ->addColumn('status_badge', fn($row) => $row->status == 'active'
                     ? '<span class="badge bg-success">Active</span>'
@@ -28,7 +31,7 @@ class ItemController extends Controller
                     $deleteForm = '<form action="' . route('admin.items.destroy', $row->id) . '" method="POST" class="delete-form" style="display:inline;">' . csrf_field() . method_field("DELETE") . '<button type="submit" class="btn icon-btn-sm btn-light-danger delete-item" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Delete"><i class="ri-delete-bin-line"></i></button></form>';
                     return '<div class="hstack gap-2 fs-15">' . $editBtn . $deleteForm . '</div>';
                 })
-                ->rawColumns(['status_badge', 'action'])
+                ->rawColumns(['score_point', 'status_badge', 'action'])
                 ->make(true);
         }
         return view('Backend.Admin.Item.Index');
@@ -45,6 +48,7 @@ class ItemController extends Controller
         $data = $request->validate([
             'item_name'    => 'required|string|max:255',
             'item_size_id' => 'required|exists:item_sizes,id',
+            'score_point'  => 'required|integer|min:0',
             'status'       => 'required|boolean',
         ]);
         $item = Item::create($data);
@@ -70,6 +74,7 @@ class ItemController extends Controller
         $data = $request->validate([
             'item_name'    => 'required|string|max:255',
             'item_size_id' => 'required|exists:item_sizes,id',
+            'score_point'  => 'required|integer|min:0',
             'status'       => 'required|boolean',
         ]);
         $item->update($data);

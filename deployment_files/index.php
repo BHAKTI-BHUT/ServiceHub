@@ -1,20 +1,35 @@
 <?php
 
-use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Application;
 
 define('LARAVEL_START', microtime(true));
 
-// Determine if the application is in maintenance mode...
-if (file_exists($maintenance = __DIR__.'/../../ServiceHub/storage/framework/maintenance.php')) {
-    require $maintenance;
+// ── Absolute path to Laravel root (NOT relative ../) ──────────────
+// Using absolute path avoids ANY symlink/relative-path ambiguity.
+$laravelBase = '/home/u466475909/domains/bhandaripackersandmovers.in/ServiceHub';
+
+// Maintenance mode
+if (file_exists($m = $laravelBase . '/storage/framework/maintenance.php')) {
+    require $m;
 }
 
-// Register the Composer autoloader...
-require __DIR__.'/../../ServiceHub/vendor/autoload.php';
+// Autoloader
+require $laravelBase . '/vendor/autoload.php';
 
-// Bootstrap Laravel and handle the request...
+// ── Bootstrap app ─────────────────────────────────────────────────
 /** @var Application $app */
-$app = require_once __DIR__.'/../../ServiceHub/bootstrap/app.php';
+$app = require $laravelBase . '/bootstrap/app.php';
 
-$app->handleRequest(Request::capture());
+// ── Pre-bind Request BEFORE any bootstrap/provider runs ───────────
+// This prevents BindingResolutionException in ANY provider that
+// touches URL facade or 'request' during boot() phase.
+$request = Request::capture();
+$app->instance('request', $request);
+\Illuminate\Support\Facades\Facade::clearResolvedInstance('request');
+
+// ── Handle request ────────────────────────────────────────────────
+$kernel   = $app->make(\Illuminate\Contracts\Http\Kernel::class);
+$response = $kernel->handle($request);
+$response->send();
+$kernel->terminate($request, $response);

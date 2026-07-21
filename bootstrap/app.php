@@ -11,15 +11,18 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
-        then: function () {
-            Route::middleware('web')
-                ->group(base_path('routes/Admin.php'));
-        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
+        // ── Force HTTPS & Root URL (Hostinger shared hosting / proxy) ──────────
+        // Must be a middleware class — Laravel 11's append() does NOT accept Closures.
+        // URL::forceRootUrl() needs 'request' bound (only safe at middleware time).
+        $middleware->append(\App\Http\Middleware\ForceHttps::class);
+
         $middleware->alias([
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
     })

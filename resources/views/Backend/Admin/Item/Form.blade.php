@@ -14,10 +14,14 @@
                 <option value="">Select Size...</option>
                 @foreach($sizes as $size)
                     <option value="{{ $size->id }}" {{ old('item_size_id', $item->item_size_id ?? '') == $size->id ? 'selected' : '' }}>
-                        {{ $size->size_name }} ({{ $size->volume_score }} pts)
+                        {{ $size->size_name }}
                     </option>
                 @endforeach
             </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Score Point</label>
+            <input type="number" class="form-control" name="score_point" value="{{ old('score_point', $item->score_point ?? 0) }}" required min="0" placeholder="e.g. 10">
         </div>
         <div class="mb-3">
             <label class="form-label">Status</label>
