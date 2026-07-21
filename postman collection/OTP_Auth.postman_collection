@@ -1,0 +1,1817 @@
+{
+    "info": {
+        "_postman_id": "servicehub-otp-auth-v2",
+        "name": "ServiceHub — OTP Auth + Booking API",
+        "description": "Complete API collection for ServiceHub Flutter App.\n\n**Auth Flow:**\n1. Check Mobile → if exists, OTP sent\n2. Register → if new user, OTP sent\n3. Verify OTP → get Bearer Token ← Token auto-saved as {{token}}\n4. Use Bearer Token for protected routes\n5. Logout → token revoked\n\n**Booking Request Flow (after login):**\n6. Submit Booking Request → Admin mein pending request aayegi\n7. Get My Requests → User ki sabhi requests\n\n**Booking Flow (after login):**\n8. Get Add-ons → Available add-on services ki list\n9. Estimate Price → Booking create karne se pehle price check karo\n10. Create Booking → Confirmed booking banao\n11. Get My Bookings → Sabhi bookings fetch karo\n12. Get Booking Detail → Kisi ek booking ki detail\n13. Cancel Booking → Booking cancel karo\n14. Verify Registration Payment → Verify payment for booking\n15. Get Assigned Vendor Details → Fetch assigned vendor/supervisor details\n16. Get Registration Fee → Fetch dynamic registration fee set by admin\n\n**Base URL:** {{base_url}} = http://127.0.0.1:8000\n**OTP (Dummy):** 123456 (always)\n**Token:** auto-set after Verify OTP",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "string",
+            "description": "Laravel dev server URL. Change if hosted elsewhere."
+        },
+        {
+            "key": "token",
+            "value": "",
+            "type": "string",
+            "description": "Bearer token — auto-filled after Verify OTP"
+        },
+        {
+            "key": "booking_id",
+            "value": "",
+            "type": "string",
+            "description": "Last created booking ID — auto-filled after Create Booking"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Check Mobile",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Response has exists field', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json).to.have.property('exists');",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "if (json.exists) {",
+                            "    console.log('Mobile found — OTP sent. Go to Verify OTP.');",
+                            "} else {",
+                            "    console.log('Mobile not found — Go to Register first.');",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"mobile\": \"9876543210\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/check-mobile",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "check-mobile"
+                    ]
+                },
+                "description": "Step 1: Check karo mobile number exists karta hai ya nahi.\n\nIf exists = true: OTP bhej diya gaya, Verify OTP pe jao.\nIf exists = false: Pehle Register karo.\n\nOTP hamesha 123456 (dummy mode ON hai)."
+            },
+            "response": [
+                {
+                    "name": "Mobile Exists (OTP Sent)",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"mobile\": \"9876543210\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/check-mobile"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"exists\": true\n}"
+                },
+                {
+                    "name": "Mobile Not Found",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"mobile\": \"9999999999\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/check-mobile"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"exists\": false\n}"
+                }
+            ]
+        },
+        {
+            "name": "2. Register New User",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 201 Created', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test('OTP sent flag', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.otp_sent).to.be.true;",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"testuser@example.com\",\n    \"mobile\": \"9876543210\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/register",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "register"
+                    ]
+                },
+                "description": "Step 2 (Only for new users): Naya user register karo.\n\nRequired fields:\n- name: Full name\n- email: Unique email\n- mobile: Unique 10-digit mobile number\n\nRegistration ke baad OTP automatically bhej diya jaata hai.\nOTP hamesha 123456 (dummy mode ON)."
+            },
+            "response": [
+                {
+                    "name": "Registration Success",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"testuser@example.com\",\n    \"mobile\": \"9876543210\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/register"
+                        }
+                    },
+                    "status": "Created",
+                    "code": 201,
+                    "body": "{\n    \"success\": true,\n    \"otp_sent\": true\n}"
+                },
+                {
+                    "name": "Validation Error (Duplicate Mobile)",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"testuser@example.com\",\n    \"mobile\": \"9876543210\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/register"
+                        }
+                    },
+                    "status": "Unprocessable Content",
+                    "code": 422,
+                    "body": "{\n    \"message\": \"The mobile has already been taken.\",\n    \"errors\": {\n        \"mobile\": [\"The mobile has already been taken.\"]\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "3. Verify OTP (Gets Token)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Token received', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json).to.have.property('token');",
+                            "    pm.expect(json.token).to.not.be.empty;",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "if (json.token) {",
+                            "    pm.collectionVariables.set('token', json.token);",
+                            "    console.log('Token saved! You can now use protected endpoints.');",
+                            "    console.log('Token:', json.token);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"mobile\": \"9876543210\",\n    \"otp\": \"123456\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/verify-otp",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "verify-otp"
+                    ]
+                },
+                "description": "Step 3: OTP verify karo aur Bearer Token lo.\n\nDummy OTP: 123456 (hamesha kaam karega)\n\nAfter success:\n- token field mein Bearer token aayega\n- Token automatically {{token}} variable mein save ho jaata hai\n- Ab protected endpoints use kar sakte ho"
+            },
+            "response": [
+                {
+                    "name": "OTP Verified — Token Received",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"mobile\": \"9876543210\",\n    \"otp\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/verify-otp"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"token\": \"1|abcdefghijklmnopqrstuvwxyz1234567890\",\n    \"user\": {\n        \"id\": 1,\n        \"name\": \"Test User\",\n        \"email\": \"testuser@example.com\",\n        \"mobile\": \"9876543210\",\n        \"role\": \"User\",\n        \"roles\": [\"User\"]\n    }\n}"
+                },
+                {
+                    "name": "Invalid OTP",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"mobile\": \"9876543210\",\n    \"otp\": \"000000\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/verify-otp"
+                        }
+                    },
+                    "status": "Bad Request",
+                    "code": 400,
+                    "body": "{\n    \"success\": false,\n    \"message\": \"Invalid or expired OTP.\"\n}"
+                }
+            ]
+        },
+        {
+            "name": "4. Resend OTP",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "console.log('Response:', JSON.stringify(json));"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"mobile\": \"9876543210\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/resend-otp",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "resend-otp"
+                    ]
+                },
+                "description": "OTP Resend karo (30 second rate limit hai).\n\n30 seconds se pehle resend karne par error aayega."
+            },
+            "response": [
+                {
+                    "name": "OTP Resent",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"mobile\": \"9876543210\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/resend-otp"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"message\": \"OTP resent successfully.\"\n}"
+                },
+                {
+                    "name": "Rate Limited (30s)",
+                    "originalRequest": {
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"mobile\": \"9876543210\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/resend-otp"
+                        }
+                    },
+                    "status": "Too Many Requests",
+                    "code": 429,
+                    "body": "{\n    \"success\": false,\n    \"message\": \"Please wait 30 seconds before requesting a new OTP.\"\n}"
+                }
+            ]
+        },
+        {
+            "name": "5. Get User Profile (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('User data returned', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json).to.have.property('id');",
+                            "    pm.expect(json).to.have.property('mobile');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/user",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "user"
+                    ]
+                },
+                "description": "Protected Route — Bearer Token required.\n\nToken Verify OTP se milta hai aur {{token}} variable mein auto-save hota hai."
+            },
+            "response": [
+                {
+                    "name": "User Profile",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer 1|abc..."
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/user"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"id\": 1,\n    \"name\": \"Test User\",\n    \"email\": \"testuser@example.com\",\n    \"mobile\": \"9876543210\",\n    \"status\": \"active\"\n}"
+                },
+                {
+                    "name": "Unauthorized (No Token)",
+                    "originalRequest": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{base_url}}/api/user"
+                        }
+                    },
+                    "status": "Unauthorized",
+                    "code": 401,
+                    "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
+                }
+            ]
+        },
+        {
+            "name": "6. Logout (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.collectionVariables.set('token', '');",
+                            "console.log('Logged out. Token cleared.');"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/logout",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "logout"
+                    ]
+                },
+                "description": "Logout — Current token revoke ho jaata hai.\n\n{{token}} variable automatically clear ho jaata hai."
+            },
+            "response": [
+                {
+                    "name": "Logged Out",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer 1|abc..."
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/logout"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"message\": \"Logged out successfully.\"\n}"
+                }
+            ]
+        },
+        {
+            "name": "7. Submit Booking Request (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 201 Created', function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test('Booking request created successfully', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json).to.have.property('booking_request');",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "if (json.success) {",
+                            "    console.log('Booking Request submitted!');",
+                            "    console.log('Request ID:', json.booking_request.id);",
+                            "    console.log('Status:', json.booking_request.status);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"phone_number\": \"9876543210\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/booking-requests",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "booking-requests"
+                    ]
+                },
+                "description": "Packers & Movers Booking Request submit karo.\n\nBearer Token required.\n\nREQUIRED fields:\n- pickup_location\n- drop_location\n- shifting_date: YYYY-MM-DD\n\nOPTIONAL fields:\n- phone_number, shifting_time, GPS coordinates\n\nAdmin mein check karo: /booking-requests (Status: Pending)"
+            },
+            "response": [
+                {
+                    "name": "Request Submitted",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking-requests"
+                        }
+                    },
+                    "status": "Created",
+                    "code": 201,
+                    "body": "{\n    \"success\": true,\n    \"message\": \"Booking request submitted successfully!\",\n    \"booking_request\": {\n        \"id\": 1,\n        \"status\": \"pending\",\n        \"pickup_location\": \"Connaught Place, New Delhi\",\n        \"drop_location\": \"Sector 18, Noida\",\n        \"shifting_date\": \"2026-07-15\",\n        \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "8. Get My Booking Requests (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Returns booking requests list', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json).to.have.property('booking_requests');",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "var total = json.booking_requests ? json.booking_requests.total : 0;",
+                            "console.log('Total Requests:', total);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/booking-requests",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "booking-requests"
+                    ]
+                },
+                "description": "Logged-in user ki sabhi booking requests fetch karo.\n\nBearer Token required.\n\nResults paginated hain (15 per page)."
+            },
+            "response": [
+                {
+                    "name": "My Booking Requests",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/booking-requests"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"booking_requests\": {\n        \"data\": [\n            {\n                \"id\": 1,\n                \"pickup_location\": \"Connaught Place, New Delhi\",\n                \"drop_location\": \"Sector 18, Noida\",\n                \"shifting_date\": \"2026-07-15\",\n                \"status\": \"pending\",\n                \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n            }\n        ],\n        \"total\": 1,\n        \"per_page\": 15,\n        \"current_page\": 1\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "9. Get Booking Init Data (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Init data returned successfully', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json).to.have.property('item_sizes');",
+                            "    pm.expect(json).to.have.property('addons');",
+                            "    pm.expect(json).to.have.property('pricing_config');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/init",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "init"
+                    ]
+                },
+                "description": "Fetch all booking initialization data in a single API call (Items, Item Sizes, Add-ons, and Pricing Configuration)."
+            },
+            "response": [
+                {
+                    "name": "Init Data Success",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/init"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"item_sizes\": [\n        {\n            \"id\": 1,\n            \"size_name\": \"Small\",\n            \"items\": [\n                { \"id\": 1, \"item_name\": \"Chair\", \"status\": \"active\" }\n            ]\n        }\n    ],\n    \"addons\": [\n        {\n            \"id\": 1,\n            \"name\": \"Packing and Boxes\",\n            \"status\": \"active\",\n            \"addons\": [\n                { \"id\": 1, \"addon_name\": \"Packing Service\", \"price\": 800, \"addon_category_id\": 1 },\n                { \"id\": 2, \"addon_name\": \"Unpacking Service\", \"price\": 600, \"addon_category_id\": 1 }\n            ]\n        },\n        {\n            \"id\": 2,\n            \"name\": \"Electronics and Furniture Installation Uninstallation\",\n            \"status\": \"active\",\n            \"addons\": [\n                { \"id\": 3, \"addon_name\": \"AC Installation / Uninstallation\", \"price\": 1200, \"addon_category_id\": 2 },\n                { \"id\": 4, \"addon_name\": \"TV Installation / Uninstallation\", \"price\": 500, \"addon_category_id\": 2 },\n                { \"id\": 5, \"addon_name\": \"Furniture Dismantling & Reassembly\", \"price\": 1000, \"addon_category_id\": 2 }\n            ]\n        }\n    ],\n    \"pricing_config\": {\n        \"per_km_rate\": 20,\n        \"per_floor_charge\": 150,\n        \"weekend_surge_percentage\": 10,\n        \"month_end_surge_percentage\": 15,\n        \"peak_time_surge_percentage\": 0,\n        \"peak_time_start\": \"20:00\",\n        \"peak_time_end\": \"23:00\",\n        \"advance_payment_percentage\": 0,\n        \"registration_fee\": 500\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "10. Estimate Booking Price (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Estimate returned', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json).to.have.property('estimated_price');",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "console.log('Estimated Price: Rs.' + (json.estimated_price || 'N/A'));"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200,\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"addon_ids\": []\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/estimate",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "estimate"
+                    ]
+                },
+                "description": "Booking create karne se pehle price estimate karo.\n\nBearer Token required.\n\nREQUIRED:\n- pickup_location, drop_location\n\nOPTIONAL:\n- GPS coordinates (better estimate ke liye)\n- shifting_date, shifting_time\n- addon_ids: [1, 2, 3]\n\nHamesha estimate karo, phir create karo!"
+            },
+            "response": [
+                {
+                    "name": "Estimate Success",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/estimate"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"estimated_price\": 4500,\n    \"distance_km\": 18.5,\n    \"breakdown\": {\n        \"base_price\": 3000,\n        \"distance_charge\": 1200,\n        \"addons_total\": 0,\n        \"tax\": 300,\n        \"total\": 4500\n    }\n}"
+                },
+                {
+                    "name": "Estimate with Add-ons",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"pickup_location\": \"Delhi\",\n    \"drop_location\": \"Noida\",\n    \"addon_ids\": [1, 2]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/estimate"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"estimated_price\": 6200,\n    \"breakdown\": {\n        \"base_price\": 3000,\n        \"distance_charge\": 1500,\n        \"addons_total\": 1200,\n        \"tax\": 500,\n        \"total\": 6200\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "11. Create Booking (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Booking created successfully', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "    pm.expect(json).to.have.property('booking_id');",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "if (json.success && json.booking_id) {",
+                            "    pm.collectionVariables.set('booking_id', json.booking_id);",
+                            "    console.log('Booking Created! ID:', json.booking_id);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"phone_number\": \"9876543210\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00\",\n    \"pickup_latitude\": 28.6315,\n    \"pickup_longitude\": 77.2167,\n    \"drop_latitude\": 28.5700,\n    \"drop_longitude\": 77.3200,\n    \"items\": [\n        {\n            \"id\": 1,\n            \"quantity\": 3\n        },\n        {\n            \"id\": 3,\n            \"quantity\": 1\n        }\n    ],\n    \"addon_ids\": [1, 2],\n    \"notes\": \"Please handle fragile items carefully\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/bookings",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings"
+                    ]
+                },
+                "description": "Naya booking create karo (confirmed booking).\n\nBearer Token required.\n\nTip: Pehle /api/bookings/estimate se price check karo.\n\nREQUIRED:\n- pickup_location, drop_location, shifting_date\n\nOPTIONAL:\n- phone_number, shifting_time, GPS, addon_ids: [1,2], notes\n\nBooking ID automatically {{booking_id}} variable mein save hoga."
+            },
+            "response": [
+                {
+                    "name": "Booking Created Successfully",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings"
+                        }
+                    },
+                    "status": "Created",
+                    "code": 201,
+                    "body": "{\n    \"success\": true,\n    \"message\": \"Booking created successfully!\",\n    \"booking\": {\n        \"id\": 1,\n        \"booking_number\": \"BK-2026-001\",\n        \"customer_id\": 1,\n        \"phone_number\": \"9876543210\",\n        \"pickup_location\": \"Connaught Place, New Delhi\",\n        \"drop_location\": \"Sector 18, Noida\",\n        \"shifting_date\": \"2026-07-15\",\n        \"shifting_time\": \"10:00:00\",\n        \"total_amount\": 4500,\n        \"status\": \"confirmed\",\n        \"notes\": \"Please handle fragile items carefully\",\n        \"addons\": [],\n        \"created_at\": \"2026-07-03T10:00:00.000000Z\"\n    }\n}"
+                },
+                {
+                    "name": "Booking with Add-ons",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"pickup_location\": \"Delhi\",\n    \"drop_location\": \"Noida\",\n    \"shifting_date\": \"2026-07-20\",\n    \"addon_ids\": [1, 2]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings"
+                        }
+                    },
+                    "status": "Created",
+                    "code": 201,
+                    "body": "{\n    \"success\": true,\n    \"booking\": {\n        \"id\": 2,\n        \"booking_number\": \"BK-2026-002\",\n        \"status\": \"confirmed\",\n        \"total_amount\": 6200,\n        \"addons\": [\n            { \"id\": 1, \"name\": \"Packing Material\", \"price\": 500 },\n            { \"id\": 2, \"name\": \"AC Handling\", \"price\": 700 }\n        ]\n    }\n}"
+                },
+                {
+                    "name": "Validation Error",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"pickup_location\": \"Delhi\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings"
+                        }
+                    },
+                    "status": "Unprocessable Content",
+                    "code": 422,
+                    "body": "{\n    \"success\": false,\n    \"errors\": {\n        \"drop_location\": [\"The drop location field is required.\"],\n        \"shifting_date\": [\"The shifting date field is required.\"]\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "12. Get My Bookings (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Returns bookings list', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json).to.have.property('data');",
+                            "});",
+                            "",
+                            "var json = pm.response.json();",
+                            "console.log('Total Bookings:', json.data ? json.data.length : 0);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/bookings",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings"
+                    ]
+                },
+                "description": "Logged-in user ke saare confirmed bookings fetch karo.\n\nBearer Token required.\n\nBooking Request se alag hai — ye woh bookings hain jo create ho chuki hain."
+            },
+            "response": [
+                {
+                    "name": "My Bookings List",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"booking_number\": \"BK-2026-001\",\n            \"status\": \"confirmed\",\n            \"pickup_location\": \"Connaught Place, New Delhi\",\n            \"drop_location\": \"Sector 18, Noida\",\n            \"shifting_date\": \"2026-07-15\",\n            \"total_amount\": 4500,\n            \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n        }\n    ]\n}"
+                },
+                {
+                    "name": "Unauthorized (No Token)",
+                    "originalRequest": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings"
+                        }
+                    },
+                    "status": "Unauthorized",
+                    "code": 401,
+                    "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
+                }
+            ]
+        },
+        {
+            "name": "13. Get Booking Detail by ID (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Booking detail returned', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json).to.have.property('id');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/{{booking_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "{{booking_id}}"
+                    ]
+                },
+                "description": "Kisi specific booking ki detail fetch karo by ID.\n\nBearer Token required.\n\n{{booking_id}} Create Booking ke baad auto-set hota hai.\nYa manually URL mein ID daalo: /api/bookings/1"
+            },
+            "response": [
+                {
+                    "name": "Booking Detail",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/1"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"id\": 1,\n    \"booking_number\": \"BK-2026-001\",\n    \"status\": \"confirmed\",\n    \"pickup_location\": \"Connaught Place, New Delhi\",\n    \"drop_location\": \"Sector 18, Noida\",\n    \"shifting_date\": \"2026-07-15\",\n    \"shifting_time\": \"10:00:00\",\n    \"total_amount\": 4500,\n    \"addons\": [],\n    \"vendor\": {\n        \"id\": 2,\n        \"name\": \"Sharma Packers\"\n    },\n    \"notes\": \"Handle with care\",\n    \"created_at\": \"2026-07-01T14:30:00.000000Z\"\n}"
+                },
+                {
+                    "name": "Booking Not Found",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/999"
+                        }
+                    },
+                    "status": "Not Found",
+                    "code": 404,
+                    "body": "{\n    \"success\": false,\n    \"message\": \"Booking not found.\"\n}"
+                }
+            ]
+        },
+        {
+            "name": "14. Cancel Booking (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Booking cancelled', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "});",
+                            "",
+                            "console.log('Booking cancelled successfully.');"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"reason\": \"Change of plans\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/{{booking_id}}/cancel",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "{{booking_id}}",
+                        "cancel"
+                    ]
+                },
+                "description": "Kisi booking ko cancel karo.\n\nBearer Token required.\n\n{{booking_id}} variable use hoga.\nYa manually URL mein ID daalo: /api/bookings/1/cancel\n\nOptional: reason field mein cancellation reason de sakte ho."
+            },
+            "response": [
+                {
+                    "name": "Booking Cancelled",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"reason\": \"Change of plans\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/1/cancel"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"message\": \"Booking cancelled successfully.\"\n}"
+                },
+                {
+                    "name": "Cannot Cancel (Already Completed/Cancelled)",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/1/cancel"
+                        }
+                    },
+                    "status": "Bad Request",
+                    "code": 400,
+                    "body": "{\n    \"success\": false,\n    \"message\": \"This booking cannot be cancelled.\"\n}"
+                },
+                {
+                    "name": "Unauthorized (No Token)",
+                    "originalRequest": {
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/1/cancel"
+                        }
+                    },
+                    "status": "Unauthorized",
+                    "code": 401,
+                    "body": "{\n    \"message\": \"Unauthenticated.\"\n}"
+                }
+            ]
+        },
+        {
+            "name": "15. Verify Registration Payment (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Payment verified successfully', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json.success).to.be.true;",
+                            "});",
+                            "",
+                            "console.log('Registration payment verified successfully.');"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"razorpay_payment_id\": \"pay_P1x2y3z4w5v6u7\",\n    \"razorpay_order_id\": \"order_O1x2y3z4w5v6u7\",\n    \"razorpay_signature\": \"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/{{booking_id}}/verify-registration-payment",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "{{booking_id}}",
+                        "verify-registration-payment"
+                    ]
+                },
+                "description": "Verify customer registration payment using Razorpay payment credentials."
+            },
+            "response": [
+                {
+                    "name": "Verification Success",
+                    "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"razorpay_payment_id\": \"pay_P1x2y3z4w5v6u7\",\n    \"razorpay_order_id\": \"order_O1x2y3z4w5v6u7\",\n    \"razorpay_signature\": \"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/1/verify-registration-payment"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"message\": \"Registration payment verified successfully.\",\n    \"booking\": {\n        \"id\": 1,\n        \"booking_number\": \"BK-2026-001\",\n        \"registration_payment_status\": \"paid\"\n    }\n}"
+                }
+            ]
+        },
+        {
+            "name": "16. Get Assigned Vendor Details (Protected)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Status 200', function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test('Vendor field exists', function () {",
+                            "    var json = pm.response.json();",
+                            "    pm.expect(json).to.have.property('vendor');",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/{{booking_id}}/assigned-vendor",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "{{booking_id}}",
+                        "assigned-vendor"
+                    ]
+                },
+                "description": "Fetch vendor and supervisor details assigned to the booking."
+            },
+            "response": [
+                {
+                    "name": "Success (Vendor Assigned)",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/1/assigned-vendor"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"booking_id\": 1,\n    \"booking_number\": \"SH-20260706-1234\",\n    \"vendor_acceptance_status\": \"accepted\",\n    \"vendor\": {\n        \"id\": 3,\n        \"name\": \"Vendor Name\",\n        \"email\": \"vendor@example.com\",\n        \"mobile\": \"9876543210\",\n        \"image\": null,\n        \"phone\": null\n    },\n    \"supervisor\": {\n        \"id\": 4,\n        \"name\": \"Supervisor Name\",\n        \"email\": \"supervisor@example.com\",\n        \"mobile\": \"9876543211\",\n        \"image\": null,\n        \"phone\": null\n    }\n}"
+                },
+                {
+                    "name": "Success (No Vendor Assigned Yet)",
+                    "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/bookings/1/assigned-vendor"
+                        }
+                    },
+                    "status": "OK",
+                    "code": 200,
+                    "body": "{\n    \"success\": true,\n    \"message\": \"No vendor assigned to this booking yet.\",\n    \"vendor\": null,\n    \"supervisor\": null\n}"
+                }
+            ]
+        },
+        {
+            "name": "16. Get Registration Fee",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/registration-fee",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "registration-fee"
+                    ]
+                },
+                "description": "Fetch the dynamic registration fee set by the Admin in Pricing Settings."
+            },
+            "response": []
+        },
+        {
+            "name": "17. Edit Pending Booking",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"pickup_location\": \"Updated Location A\",\n    \"drop_location\": \"Updated Location B\",\n    \"pickup_latitude\": 28.7041,\n    \"pickup_longitude\": 77.1025,\n    \"drop_latitude\": 28.5355,\n    \"drop_longitude\": 77.391,\n    \"shifting_date\": \"2024-12-30\",\n    \"shifting_time\": \"10:00 AM\",\n    \"floors\": 3,\n    \"items\": [\n        {\n            \"id\": 1,\n            \"quantity\": 2\n        }\n    ]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/bookings/{{booking_id}}/update",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "bookings",
+                        "{{booking_id}}",
+                        "update"
+                    ]
+                },
+                "description": "Update a pending booking before it gets confirmed by admin. Needs all fields just like creating a booking."
+            },
+            "response": []
+        },
+        {
+            "name": "18. Update Profile",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "Authorization", "value": "Bearer {{token}}" }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        { "key": "name", "value": "John Doe Updated", "type": "text" },
+                        { "key": "email", "value": "johndoe@example.com", "type": "text" },
+                        { "key": "mobile", "value": "9876543210", "type": "text" },
+                        { "key": "password", "value": "newpassword123", "type": "text", "description": "Optional" },
+                        { "key": "image", "type": "file", "src": "", "description": "Optional profile photo file" },
+                        { "key": "remove_image", "value": "0", "type": "text", "description": "Send 1 to delete current photo" }
+                    ]
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/profile/update",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "profile", "update"]
+                },
+                "description": "Allows logged-in Customers, Vendors, and Supervisors to update their profile name, email, mobile, password, and upload or delete their profile picture."
+            },
+            "response": []
+        },
+        {
+            "name": "Vendor Portal",
+            "item": [
+                {
+                    "name": "1. Get Dashboard Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/vendor/dashboard-stats",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "vendor", "dashboard-stats"]
+                        },
+                        "description": "Fetch vendor bookings stats and earnings total/pending details."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Get Assigned Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/vendor/bookings?filter=pending",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "vendor", "bookings"],
+                            "query": [
+                                { "key": "filter", "value": "pending", "description": "Optional: pending, accepted, rejected" }
+                            ]
+                        },
+                        "description": "List all bookings assigned to this vendor, with filter option."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Get Booking Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/vendor/bookings/{{booking_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "vendor", "bookings", "{{booking_id}}"]
+                        },
+                        "description": "View complete detail of an assigned booking including item size, addons, etc."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "4. Respond to Booking Request (Accept/Reject)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"accepted\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/vendor/bookings/{{booking_id}}/respond",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "vendor", "bookings", "{{booking_id}}", "respond"]
+                        },
+                        "description": "Respond to admin assignment request. status values: accepted or rejected"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Get Supervisors List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/vendor/supervisors",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "vendor", "supervisors"]
+                        },
+                        "description": "Get all supervisors linked to the vendor to assign to bookings."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "6. Assign Supervisor to Booking",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"supervisor_id\": 4\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/vendor/bookings/{{booking_id}}/assign-supervisor",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "vendor", "bookings", "{{booking_id}}", "assign-supervisor"]
+                        },
+                        "description": "Assign supervisor to accepted booking. Send empty/null supervisor_id to unassign."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Supervisor Portal",
+            "item": [
+                {
+                    "name": "1. Get Assigned Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings?status=active",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings"],
+                            "query": [
+                                { "key": "status", "value": "active", "description": "Optional: active, completed, cancelled" }
+                            ]
+                        },
+                        "description": "Fetch bookings list assigned to the authenticated supervisor."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "2. Get Booking Detail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}"]
+                        },
+                        "description": "Fetch detailed info of an assigned booking."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "3. Start Trip",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/start-trip",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "start-trip"]
+                        },
+                        "description": "Mark the vehicle as departed and advance status to trip_started."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "4. Start Shifting",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/start-shifting",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "start-shifting"]
+                        },
+                        "description": "Mark the shifting process as active, moving tracking_status to shifting_started."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Update Shifting Items/Addons",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"items\": [\n        {\"id\": 1, \"quantity\": 2},\n        {\"id\": 5, \"quantity\": 1}\n    ],\n    \"addons\": [2, 3]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/update-items",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "update-items"]
+                        },
+                        "description": "Update shifting items or addons dynamically. Automatically recalculates remaining balance."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "6. Upload Photo Proofs",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                { "key": "images[]", "type": "file", "src": [] },
+                                { "key": "type", "value": "pickup", "type": "text" }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/upload-proof",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "upload-proof"]
+                        },
+                        "description": "Upload multiple shifting photo proofs. Uploading type 'pickup' automatically advances status to pickup_completed."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "7. Update Live Location",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Content-Type", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"latitude\": 28.6258,\n    \"longitude\": 77.3792,\n    \"booking_id\": \"{{booking_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/location",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "location"]
+                        },
+                        "description": "Update supervisor coordinates live tracking trail."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "8. Complete Shifting",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            { "key": "Authorization", "value": "Bearer {{token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/supervisor/bookings/{{booking_id}}/complete-shifting",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "supervisor", "bookings", "{{booking_id}}", "complete-shifting"]
+                        },
+                        "description": "Complete the shifting job. Validates that the customer has completed payment."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

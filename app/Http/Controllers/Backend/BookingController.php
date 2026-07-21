@@ -1,0 +1,725 @@
+<?php
+
+namespace App\Http\Controllers\Backend;
+
+use App\Http\Controllers\Controller;
+use App\Models\Booking;
+use App\Models\PricingSetting;
+use App\Models\User;
+use App\Services\PricingEngine;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
+class BookingController extends Controller
+{
+    /**
+     * Display a listing of bookings.
+     */
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $bookings = Booking::with(['customer', 'vendor'])->orderBy('created_at', 'desc');
+
+            return datatables()->of($bookings)
+                ->addColumn('customer_name', function ($booking) {
+                    $name = $booking->customer ? e($booking->customer->name) : '<span class="text-muted">—</span>';
+                    $source = strtolower($booking->source ?? 'admin');
+                    if ($source === 'app') {
+                        $badge = '<span class="badge bg-info-focus text-info mt-1 d-inline-block fs-10" style="padding: 2px 6px;"><i class="ri-smartphone-line align-middle me-1"></i>App</span>';
+                    } elseif ($source === 'website') {
+                        $badge = '<span class="badge bg-success-focus text-success mt-1 d-inline-block fs-10" style="padding: 2px 6px;"><i class="ri-global-line align-middle me-1"></i>Website</span>';
+                    } else {
+                        $badge = '<span class="badge bg-secondary-focus text-secondary mt-1 d-inline-block fs-10" style="padding: 2px 6px;"><i class="ri-user-settings-line align-middle me-1"></i>Admin</span>';
+                    }
+                    return '<div>' . $name . '</div>' . $badge;
+                })
+                ->addColumn('customer_mobile', function ($booking) {
+                    return $booking->customer ? ($booking->customer->mobile ?? '—') : '—';
+                })
+                ->editColumn('booking_number', function ($booking) {
+                    return '<span class="font-monospace fw-semibold text-primary">' . $booking->booking_number . '</span>';
+                })
+                ->editColumn('shifting_date', function ($booking) {
+                    $time = $booking->shifting_time ? date('h:i A', strtotime($booking->shifting_time)) : '—';
+                    $date = $booking->shifting_date ? date('d M Y', strtotime($booking->shifting_date)) : '—';
+                    return '<div>' . $date . '</div><span class="text-muted fs-11">' . $time . '</span>';
+                })
+                ->editColumn('amount', function ($booking) {
+                    return '₹' . number_format($booking->amount, 2);
+                })
+                ->addColumn('status', function ($booking) {
+                    switch ($booking->status) {
+                        case 'pending':     $badge = 'bg-warning-focus text-warning'; break;
+                        case 'confirmed':   $badge = 'bg-primary-focus text-primary'; break;
+                        case 'in_progress': $badge = 'bg-info-focus text-info'; break;
+                        case 'completed':   $badge = 'bg-success-focus text-success'; break;
+                        case 'cancelled':   $badge = 'bg-danger-focus text-danger'; break;
+                        default:            $badge = 'bg-light text-dark';
+                    }
+                    return '<span class="badge ' . $badge . '">' . ucfirst(str_replace('_', ' ', $booking->status)) . '</span>';
+                })
+                ->addColumn('vendor_id', fn($booking) => $booking->vendor_id)
+                ->addColumn('vendor_name', fn($booking) => $booking->vendor?->name ?? '')
+                ->addColumn('vendor_acceptance_status', fn($booking) => $booking->vendor_acceptance_status)
+                ->addColumn('registration_payment_status', function ($booking) {
+                    switch ($booking->registration_payment_status) {
+                        case 'paid':    $badge = 'bg-success-focus text-success'; $label = 'Paid'; break;
+                        case 'failed':  $badge = 'bg-danger-focus text-danger'; $label = 'Failed'; break;
+                        default:        $badge = 'bg-warning-focus text-warning'; $label = 'Pending';
+                    }
+                    return '<span class="badge ' . $badge . '">' . $label . '</span>';
+                })
+                ->addColumn('action', function ($booking) {
+                    $showBtn = '<a href="' . route('booking.show', $booking->id) . '" class="btn icon-btn-sm btn-light-info" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="View Details"><i class="ri-eye-line"></i></a>';
+                    $editBtn = '<a href="' . route('booking.edit', $booking->id) . '" class="btn icon-btn-sm btn-light-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Edit"><i class="ri-pencil-line"></i></a>';
+
+                    $actions = '<div class="hstack gap-2 fs-15">' . $showBtn . $editBtn;
+
+                    if (in_array($booking->status, ['pending', 'confirmed', 'in_progress'])) {
+                        $actions .= '
+                            <form action="' . route('booking.cancel', $booking->id) . '" method="POST" class="status-action-form" style="display:inline;">
+                                ' . csrf_field() . '
+                                <button type="submit" class="btn icon-btn-sm btn-light-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cancel Booking">
+                                    <i class="ri-close-circle-line"></i>
+                                </button>
+                            </form>';
+                    }
+                    if ($booking->status !== 'completed' && $booking->status !== 'cancelled') {
+                        if ($booking->registration_payment_status !== 'paid') {
+                            $actions .= '
+                                <button type="button" class="btn icon-btn-sm btn-light-secondary" disabled data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Reg. Fee Pending – Cannot Complete">
+                                    <i class="ri-checkbox-circle-line"></i>
+                                </button>';
+                        } else {
+                            $actions .= '
+                                <form action="' . route('booking.complete', $booking->id) . '" method="POST" class="status-action-form" style="display:inline;">
+                                    ' . csrf_field() . '
+                                    <button type="submit" class="btn icon-btn-sm btn-light-success" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Complete Booking">
+                                        <i class="ri-checkbox-circle-line"></i>
+                                    </button>
+                                </form>';
+                        }
+                    }
+
+                    $actions .= '</div>';
+                    return $actions;
+                })
+                ->rawColumns(['customer_name', 'booking_number', 'shifting_date', 'status', 'registration_payment_status', 'action'])
+                ->make(true);
+        }
+
+        $stats = [
+            'total'     => Booking::count(),
+            'confirmed' => Booking::where('status', 'confirmed')->count(),
+            'completed' => Booking::where('status', 'completed')->count(),
+            'cancelled' => Booking::where('status', 'cancelled')->count(),
+        ];
+
+        $vendors = User::role('Vendor')->orderBy('name')->get();
+
+        return view('Backend.Booking.Index', compact('stats', 'vendors'));
+    }
+
+    /**
+     * Show booking creation form.
+     */
+    public function create()
+    {
+        $itemSizes = \App\Models\ItemSize::where('status', 'active')
+            ->with(['items' => function ($query) {
+                $query->where('status', 'active');
+            }])->get();
+        $addonCategories = \App\Models\AddOnCategory::where('status', 'active')
+            ->with(['addons' => function ($q) {
+                $q->where('status', 1);
+            }])->get();
+
+        $pricingSettings = PricingSetting::whereIn('key', [
+            'per_km_rate',
+            'per_floor_charge',
+            'weekend_surge_percentage',
+            'month_end_surge_percentage',
+            'peak_time_surge_percentage',
+            'peak_time_start',
+            'peak_time_end',
+            'advance_payment_percentage',
+        ])->get()->keyBy('key');
+
+        $pricingConfig = [
+            'per_km_rate' => (float) ($pricingSettings->get('per_km_rate')->value ?? 20),
+            'per_floor_charge' => (float) ($pricingSettings->get('per_floor_charge')->value ?? 150),
+            'weekend_surge_percentage' => (float) ($pricingSettings->get('weekend_surge_percentage')->value ?? 10),
+            'month_end_surge_percentage' => (float) ($pricingSettings->get('month_end_surge_percentage')->value ?? 15),
+            'peak_time_surge_percentage' => (float) ($pricingSettings->get('peak_time_surge_percentage')->value ?? 0),
+            'peak_time_start' => $pricingSettings->get('peak_time_start')->value ?? '20:00',
+            'peak_time_end' => $pricingSettings->get('peak_time_end')->value ?? '23:00',
+            'advance_payment_percentage' => (float) ($pricingSettings->get('advance_payment_percentage')->value ?? 20),
+        ];
+
+        $customers = User::role('Customer')->orderBy('name')->get();
+
+        return view('Backend.Booking.Create', compact('itemSizes', 'addonCategories', 'pricingConfig', 'customers'));
+    }
+
+    /**
+     * Store new booking — auto-calculate pricing via PricingEngine.
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'customer_id'           => 'required|exists:users,id',
+            'pickup_location'       => 'required|string|max:500',
+            'drop_location'         => 'required|string|max:500',
+            'pickup_latitude'       => 'nullable|numeric',
+            'pickup_longitude'      => 'nullable|numeric',
+            'drop_latitude'         => 'nullable|numeric',
+            'drop_longitude'        => 'nullable|numeric',
+            'pickup_contact_name'   => 'nullable|string|max:255',
+            'pickup_contact_mobile' => 'nullable|string|max:20',
+            'drop_contact_name'     => 'nullable|string|max:255',
+            'drop_contact_mobile'   => 'nullable|string|max:20',
+            'shifting_date'         => 'required|date',
+            'shifting_time'         => 'required',
+            'status'                => 'required|in:pending,confirmed,in_progress,completed,cancelled',
+            'items'                 => 'nullable|array',
+            'items.*.id'            => 'exists:items,id',
+            'items.*.quantity'      => 'integer|min:1|max:50',
+            'addons'                => 'nullable|array',
+            'addons.*'              => 'exists:add_ons,id',
+            'floors'                => 'nullable|integer|min:0|max:20',
+            'loading_charge'        => 'nullable|numeric|min:0',
+            'unloading_charge'      => 'nullable|numeric|min:0',
+            'packing_charge'        => 'nullable|numeric|min:0',
+            'labour_charge'         => 'nullable|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // Collect extra manual charges
+        $loadingCharge   = (float) $request->input('loading_charge',   0);
+        $unloadingCharge = (float) $request->input('unloading_charge', 0);
+        $packingCharge   = (float) $request->input('packing_charge',   0);
+        $labourCharge    = (float) $request->input('labour_charge',    0);
+
+        // Run PricingEngine
+        $engine = new PricingEngine();
+        $quote  = $engine->calculateQuote([
+            'items'             => $request->input('items', []),
+            'addons'            => $request->input('addons', []),
+            'pickup_latitude'   => $request->pickup_latitude,
+            'pickup_longitude'  => $request->pickup_longitude,
+            'drop_latitude'     => $request->drop_latitude,
+            'drop_longitude'    => $request->drop_longitude,
+            'shifting_date'     => $request->shifting_date,
+            'floors'            => $request->input('floors', 0),
+        ]);
+
+        // Block if Survey Required
+        if ($quote['survey_required']) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'survey_required' => true,
+                    'message'         => $quote['survey_message'],
+                ], 422);
+            }
+            return back()->withInput()->with('error', $quote['survey_message']);
+        }
+
+        $vendorCommissionPct    = 15;
+        $extraChargesTotal      = $loadingCharge + $unloadingCharge + $packingCharge + $labourCharge;
+        $grandTotal             = $quote['total_amount'] + $extraChargesTotal;
+        $vendorCommissionAmount = round($grandTotal * ($vendorCommissionPct / 100), 2);
+        $advanceAmount          = 0.00;
+
+        DB::beginTransaction();
+        try {
+            $booking = Booking::create([
+                'customer_id'              => $request->customer_id,
+                'pickup_location'          => $request->pickup_location,
+                'drop_location'            => $request->drop_location,
+                'pickup_latitude'          => $request->pickup_latitude,
+                'pickup_longitude'         => $request->pickup_longitude,
+                'drop_latitude'            => $request->drop_latitude,
+                'drop_longitude'           => $request->drop_longitude,
+                'pickup_contact_name'      => $request->pickup_contact_name,
+                'pickup_contact_mobile'    => $request->pickup_contact_mobile,
+                'drop_contact_name'        => $request->drop_contact_name,
+                'drop_contact_mobile'      => $request->drop_contact_mobile,
+                'shifting_date'            => $request->shifting_date,
+                'shifting_time'            => $request->shifting_time,
+                'floors'                   => $request->input('floors', 0),
+                'status'                   => $request->status,
+                'tracking_status'          => $request->status === 'confirmed' ? 'confirmed' : ($request->status === 'in_progress' ? 'trip_started' : ($request->status === 'completed' ? 'completed' : ($request->status === 'cancelled' ? 'cancelled' : 'pending_confirmation'))),
+
+                // PricingEngine output
+                'total_volume_score'       => $quote['total_volume_score'],
+                'category_id'              => $quote['category_id'],
+                'vehicle_id'               => $quote['vehicle_id'],
+                'total_distance'           => $quote['total_distance_km'],
+                'base_fare'                => $quote['base_fare'],
+                'distance_charges'         => $quote['distance_charges'],
+                'addon_charges'            => $quote['addon_charges'],
+                'floor_charges'            => $quote['floor_charges'],
+                'weekend_charges'          => $quote['weekend_charges'],
+                'month_end_charges'        => $quote['month_end_charges'],
+                'loading_charge'           => $loadingCharge,
+                'unloading_charge'         => $unloadingCharge,
+                'packing_charge'           => $packingCharge,
+                'labour_charge'            => $labourCharge,
+                'amount'                   => $grandTotal,
+
+                // Payment breakdown
+                'advance_amount'           => 0.00,
+                'remaining_amount'         => $grandTotal,
+                'advance_payment_status'   => 'paid',
+                'remaining_payment_status' => 'pending',
+
+                // Vendor settlement
+                'vendor_commission_amount' => $vendorCommissionAmount,
+                'vendor_settlement_amount' => $grandTotal - $vendorCommissionAmount,
+            ]);
+
+            // Save booked items to pivot
+            if (!empty($quote['items_breakdown'])) {
+                foreach ($quote['items_breakdown'] as $itemData) {
+                    $booking->items()->attach($itemData['id'], [
+                        'quantity'               => $itemData['quantity'],
+                        'calculated_volume_score'=> $itemData['line_score'],
+                    ]);
+                }
+            }
+
+            // Save booked add-ons to pivot
+            if (!empty($quote['addons_breakdown'])) {
+                foreach ($quote['addons_breakdown'] as $addonData) {
+                    $booking->addOns()->attach($addonData['id'], [
+                        'price' => $addonData['price'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if ($request->ajax()) {
+                return response()->json(['message' => 'Failed to create booking: ' . $e->getMessage()], 500);
+            }
+            return back()->withInput()->with('error', 'Failed to create booking. Please try again.');
+        }
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Booking created successfully!', 'booking_id' => $booking->id]);
+        }
+
+        return redirect()->route('booking.index')->with('success', 'Booking #' . $booking->booking_number . ' created successfully!');
+    }
+
+    /**
+     * Display booking detailed overview.
+     */
+    public function show(Booking $booking)
+    {
+        $booking->load(['customer', 'bookingRequest', 'category', 'vehicle', 'items', 'addOns', 'supervisor']);
+        return view('Backend.Booking.Show', compact('booking'));
+    }
+
+    /**
+     * Show edit form.
+     */
+    public function edit(Booking $booking)
+    {
+        $booking->load(['customer', 'items', 'addOns']);
+        
+        $itemSizes = \App\Models\ItemSize::where('status', 'active')
+            ->with(['items' => function ($query) {
+                $query->where('status', 'active');
+            }])->get();
+        $addonCategories = \App\Models\AddOnCategory::where('status', 'active')
+            ->with(['addons' => function ($q) {
+                $q->where('status', 1);
+            }])->get();
+
+        $pricingSettings = PricingSetting::whereIn('key', [
+            'per_km_rate',
+            'per_floor_charge',
+            'weekend_surge_percentage',
+            'month_end_surge_percentage',
+            'peak_time_surge_percentage',
+            'peak_time_start',
+            'peak_time_end',
+            'advance_payment_percentage',
+        ])->get()->keyBy('key');
+
+        $pricingConfig = [
+            'per_km_rate' => (float) ($pricingSettings->get('per_km_rate')->value ?? 20),
+            'per_floor_charge' => (float) ($pricingSettings->get('per_floor_charge')->value ?? 150),
+            'weekend_surge_percentage' => (float) ($pricingSettings->get('weekend_surge_percentage')->value ?? 10),
+            'month_end_surge_percentage' => (float) ($pricingSettings->get('month_end_surge_percentage')->value ?? 15),
+            'peak_time_surge_percentage' => (float) ($pricingSettings->get('peak_time_surge_percentage')->value ?? 0),
+            'peak_time_start' => $pricingSettings->get('peak_time_start')->value ?? '20:00',
+            'peak_time_end' => $pricingSettings->get('peak_time_end')->value ?? '23:00',
+            'advance_payment_percentage' => (float) ($pricingSettings->get('advance_payment_percentage')->value ?? 20),
+        ];
+
+        $customers = User::role('Customer')->orderBy('name')->get();
+        $vendors = User::role('Vendor')->orderBy('name')->get();
+
+        return view('Backend.Booking.Edit', compact('booking', 'itemSizes', 'addonCategories', 'pricingConfig', 'customers', 'vendors'));
+    }
+
+    /**
+     * Update booking — re-run PricingEngine if items/addons changed.
+     */
+    public function update(Request $request, Booking $booking)
+    {
+        $validator = Validator::make($request->all(), [
+            'customer_id'           => 'required|exists:users,id',
+            'pickup_location'       => 'required|string|max:500',
+            'drop_location'         => 'required|string|max:500',
+            'pickup_latitude'       => 'nullable|numeric',
+            'pickup_longitude'      => 'nullable|numeric',
+            'drop_latitude'         => 'nullable|numeric',
+            'drop_longitude'        => 'nullable|numeric',
+            'pickup_contact_name'   => 'nullable|string|max:255',
+            'pickup_contact_mobile' => 'nullable|string|max:20',
+            'drop_contact_name'     => 'nullable|string|max:255',
+            'drop_contact_mobile'   => 'nullable|string|max:20',
+            'shifting_date'         => 'required|date',
+            'shifting_time'         => 'required',
+            'status'                => 'required|in:pending,confirmed,in_progress,completed,cancelled',
+            'tracking_status'       => 'required|in:pending_confirmation,confirmed,trip_started,shifting_started,pickup_completed,completed,cancelled',
+            'items'                 => 'nullable|array',
+            'items.*.id'            => 'exists:items,id',
+            'items.*.quantity'      => 'integer|min:1|max:50',
+            'addons'                => 'nullable|array',
+            'addons.*'              => 'exists:add_ons,id',
+            'floors'                => 'nullable|integer|min:0|max:20',
+            'loading_charge'        => 'nullable|numeric|min:0',
+            'unloading_charge'      => 'nullable|numeric|min:0',
+            'packing_charge'        => 'nullable|numeric|min:0',
+            'labour_charge'         => 'nullable|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $loadingCharge   = (float) $request->input('loading_charge',   0);
+        $unloadingCharge = (float) $request->input('unloading_charge', 0);
+        $packingCharge   = (float) $request->input('packing_charge',   0);
+        $labourCharge    = (float) $request->input('labour_charge',    0);
+
+        $engine = new PricingEngine();
+        $quote  = $engine->calculateQuote([
+            'items'             => $request->input('items', []),
+            'addons'            => $request->input('addons', []),
+            'pickup_latitude'   => $request->pickup_latitude,
+            'pickup_longitude'  => $request->pickup_longitude,
+            'drop_latitude'     => $request->drop_latitude,
+            'drop_longitude'    => $request->drop_longitude,
+            'shifting_date'     => $request->shifting_date,
+            'shifting_time'     => $request->shifting_time,
+            'floors'            => $request->input('floors', 0),
+        ]);
+
+        if ($quote['survey_required']) {
+            if ($request->ajax()) {
+                return response()->json(['survey_required' => true, 'message' => $quote['survey_message']], 422);
+            }
+            return back()->withInput()->with('error', $quote['survey_message']);
+        }
+
+        $extraChargesTotal      = $loadingCharge + $unloadingCharge + $packingCharge + $labourCharge;
+        $grandTotal             = $quote['total_amount'] + $extraChargesTotal;
+        $advanceAmount          = 0.00;
+        $vendorCommissionAmount = round($grandTotal * 0.15, 2);
+
+        DB::beginTransaction();
+        try {
+            $booking->update([
+                'customer_id'              => $request->customer_id,
+                'pickup_location'          => $request->pickup_location,
+                'drop_location'            => $request->drop_location,
+                'pickup_latitude'          => $request->pickup_latitude,
+                'pickup_longitude'         => $request->pickup_longitude,
+                'drop_latitude'            => $request->drop_latitude,
+                'drop_longitude'           => $request->drop_longitude,
+                'pickup_contact_name'      => $request->pickup_contact_name,
+                'pickup_contact_mobile'    => $request->pickup_contact_mobile,
+                'drop_contact_name'        => $request->drop_contact_name,
+                'drop_contact_mobile'      => $request->drop_contact_mobile,
+                'shifting_date'            => $request->shifting_date,
+                'shifting_time'            => $request->shifting_time ? date('H:i:s', strtotime($request->shifting_time)) : null,
+                'floors'                   => $request->input('floors', 0),
+                'status'                   => $request->status,
+                'tracking_status'          => $request->tracking_status,
+                'total_volume_score'       => $quote['total_volume_score'],
+                'category_id'              => $quote['category_id'],
+                'vehicle_id'               => $quote['vehicle_id'],
+                'total_distance'           => $quote['total_distance_km'],
+                'base_fare'                => $quote['base_fare'],
+                'distance_charges'         => $quote['distance_charges'],
+                'addon_charges'            => $quote['addon_charges'],
+                'floor_charges'            => $quote['floor_charges'],
+                'weekend_charges'          => $quote['weekend_charges'],
+                'month_end_charges'        => $quote['month_end_charges'],
+                'loading_charge'           => $loadingCharge,
+                'unloading_charge'         => $unloadingCharge,
+                'packing_charge'           => $packingCharge,
+                'labour_charge'            => $labourCharge,
+                'amount'                   => $grandTotal,
+                'advance_amount'           => 0.00,
+                'remaining_amount'         => $grandTotal,
+                'vendor_commission_amount' => $vendorCommissionAmount,
+                'vendor_settlement_amount' => $grandTotal - $vendorCommissionAmount,
+            ]);
+
+            // Sync items
+            $booking->items()->detach();
+            foreach ($quote['items_breakdown'] as $itemData) {
+                $booking->items()->attach($itemData['id'], [
+                    'quantity'                => $itemData['quantity'],
+                    'calculated_volume_score' => $itemData['line_score'],
+                ]);
+            }
+
+            // Sync add-ons
+            $booking->addOns()->detach();
+            foreach ($quote['addons_breakdown'] as $addonData) {
+                $booking->addOns()->attach($addonData['id'], [
+                    'price' => $addonData['price'],
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if ($request->ajax()) {
+                return response()->json(['message' => 'Failed to update booking: ' . $e->getMessage()], 500);
+            }
+            return back()->withInput()->with('error', 'Failed to update booking. Please try again.');
+        }
+
+        if ($request->ajax()) {
+            return response()->json(['message' => 'Booking updated successfully!']);
+        }
+
+        return redirect()->route('booking.index')->with('success', 'Booking updated successfully!');
+    }
+
+    /**
+     * Quick cancel.
+     */
+    public function cancel(Booking $booking)
+    {
+        $booking->update(['status' => 'cancelled', 'tracking_status' => 'cancelled']);
+        if (request()->ajax()) {
+            return response()->json(['message' => 'Booking cancelled.']);
+        }
+        return redirect()->route('booking.index')->with('success', 'Booking cancelled.');
+    }
+
+    /**
+     * Quick complete.
+     */
+    public function complete(Booking $booking)
+    {
+        // Registration Fee pending ho to complete nahi hoga
+        if ($booking->registration_payment_status !== 'paid') {
+            if (request()->ajax()) {
+                return response()->json(['message' => 'Cannot complete booking. Registration Fee is still pending.'], 400);
+            }
+            return redirect()->route('booking.index')->with('error', 'Cannot complete booking. Registration Fee is still pending.');
+        }
+
+        $booking->update(['status' => 'completed', 'tracking_status' => 'completed']);
+        if (request()->ajax()) {
+            return response()->json(['message' => 'Booking marked as completed.']);
+        }
+        return redirect()->route('booking.index')->with('success', 'Booking marked as completed.');
+    }
+
+    /**
+     * AJAX customer search (Select2).
+     */
+    public function searchCustomers(Request $request)
+    {
+        $search    = $request->q;
+        $customers = User::role('Customer')
+            ->where(function ($q) use ($search) {
+                $q->where('name',   'LIKE', "%{$search}%")
+                  ->orWhere('email',  'LIKE', "%{$search}%")
+                  ->orWhere('mobile', 'LIKE', "%{$search}%");
+            })
+            ->limit(20)
+            ->get();
+
+        $formatted = $customers->map(fn($c) => [
+            'id'   => $c->id,
+            'text' => $c->name . ' (' . ($c->mobile ?? 'No Mobile') . ')',
+        ]);
+
+        return response()->json(['items' => $formatted]);
+    }
+
+    /**
+     * AJAX live pricing endpoint.
+     */
+    public function ajaxPricing(Request $request)
+    {
+        $engine = new PricingEngine();
+        $quote  = $engine->calculateQuote($request->all());
+        return response()->json($quote);
+    }
+
+    /**
+     * AJAX: Assign vendor to a booking from the listing dropdown.
+     */
+    public function assignVendor(Request $request, Booking $booking)
+    {
+        if ($booking->registration_payment_status !== 'paid') {
+            return response()->json(['message' => 'Cannot assign vendor. Registration payment is pending.'], 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'vendor_id' => 'nullable|exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $newVendorId = $request->vendor_id ?: null;
+        $oldVendorId = $booking->vendor_id;
+
+        // If the booking is already accepted, admin shouldn't change it unless needed
+        if ($booking->vendor_acceptance_status === 'accepted' && $oldVendorId != $newVendorId) {
+            return response()->json(['message' => 'This booking has already been accepted by the assigned vendor.'], 400);
+        }
+
+        if ($oldVendorId != $newVendorId) {
+            if ($oldVendorId) {
+                // Mark previous vendor request as reassigned
+                \App\Models\BookingVendorRequest::where('booking_id', $booking->id)
+                    ->where('vendor_id', $oldVendorId)
+                    ->where('status', 'pending')
+                    ->update(['status' => 'reassigned']);
+
+                // Track reassignment
+                \App\Models\OrderTracking::create([
+                    'booking_id' => $booking->id,
+                    'status' => 'reassigned',
+                    'notes' => 'Booking reassigned to another vendor. Previous vendor ID: ' . $oldVendorId,
+                ]);
+            }
+
+            if ($newVendorId) {
+                \App\Models\BookingVendorRequest::updateOrCreate(
+                    ['booking_id' => $booking->id, 'vendor_id' => $newVendorId],
+                    ['status' => 'pending']
+                );
+            }
+
+            $booking->vendor_id = $newVendorId;
+            $booking->vendor_acceptance_status = $newVendorId ? 'pending' : null;
+            $booking->save();
+        }
+
+        $name = $booking->vendor_id
+            ? User::find($booking->vendor_id)->name
+            : 'Unassigned';
+
+        return response()->json([
+            'message'                  => 'Vendor assigned: ' . $name,
+            'vendor_id'                => $booking->vendor_id,
+            'vendor_name'              => $name,
+            'vendor_acceptance_status' => $booking->vendor_acceptance_status,
+        ]);
+    }
+
+    /**
+     * Display printable Registration Invoice.
+     */
+    public function registrationInvoice(Booking $booking)
+    {
+        $booking->load('customer');
+
+        if ($booking->registration_payment_status !== 'paid') {
+            return redirect()->route('booking.show', $booking->id)
+                ->with('error', 'Registration invoice is only available for paid bookings.');
+        }
+
+        return view('invoices.registration_pdf', compact('booking'));
+    }
+
+    /**
+     * Record remaining payment as paid directly to admin.
+     */
+    public function recordPayment(Booking $booking)
+    {
+        if ($booking->remaining_payment_status === 'paid') {
+            return response()->json(['message' => 'Remaining payment is already paid.'], 400);
+        }
+
+        $booking->update([
+            'remaining_payment_status' => 'paid',
+            'payment_method' => 'admin',
+        ]);
+
+        // Process 80% settlement to vendor wallet
+        $commissionService = new \App\Services\CommissionService();
+        $commissionService->processSettlement($booking, 'admin');
+
+        \App\Models\OrderTracking::create([
+            'booking_id' => $booking->id,
+            'status' => 'payment_received',
+            'notes' => 'Remaining payment of ₹' . number_format($booking->remaining_amount, 2) . ' recorded as paid directly to Admin. 80% settlement credited to vendor wallet.',
+        ]);
+
+        return response()->json([
+            'message' => 'Remaining payment recorded successfully! 80% settlement credited to vendor wallet.',
+        ]);
+    }
+
+    /**
+     * Get live location trace coordinates of the supervisor for polling.
+     */
+    public function getLiveLocation(Booking $booking)
+    {
+        $supervisor = $booking->supervisor;
+        if (!$supervisor) {
+            return response()->json(['success' => false, 'message' => 'No supervisor assigned.'], 404);
+        }
+
+        $latest = $booking->locations()->latest()->first();
+        $path = $booking->locations()->orderBy('created_at', 'asc')->get(['latitude', 'longitude', 'created_at']);
+
+        return response()->json([
+            'success' => true,
+            'supervisor' => [
+                'name' => $supervisor->name,
+                'mobile' => $supervisor->mobile,
+                'latitude' => $supervisor->latitude,
+                'longitude' => $supervisor->longitude,
+            ],
+            'latest' => $latest ? [
+                'latitude' => (float)$latest->latitude,
+                'longitude' => (float)$latest->longitude,
+                'updated_at' => $latest->created_at->diffForHumans(),
+            ] : null,
+            'path' => $path->map(fn($loc) => [
+                (float)$loc->latitude,
+                (float)$loc->longitude
+            ])
+        ]);
+    }
+}
