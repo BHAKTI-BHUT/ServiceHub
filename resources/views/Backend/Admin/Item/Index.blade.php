@@ -15,6 +15,7 @@
                             <th>#</th>
                             <th>Item Name</th>
                             <th>Item Size</th>
+                            <th>Score Point</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -35,6 +36,7 @@
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'item_name', name: 'item_name' },
             { data: 'size_name', name: 'size.size_name' },
+            { data: 'score_point', name: 'score_point' },
             { data: 'status_badge', name: 'status', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ]);

@@ -185,11 +185,6 @@
                     <h6 class="card-title mb-0">Select Items to Shift</h6>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <div class="d-flex gap-1 align-items-center fs-11 text-muted">
-                        <span class="badge bg-info-subtle text-info border">S=1</span>
-                        <span class="badge bg-warning-subtle text-warning border">M=3</span>
-                        <span class="badge bg-danger-subtle text-danger border">L=5</span>
-                    </div>
                     <div class="text-end">
                         <span class="fw-bold text-dark fs-12">Score:</span>
                         <span id="totalScoreDisplay" class="badge bg-primary fs-12 px-2">0</span>
@@ -201,13 +196,13 @@
                 <div class="px-4 {{ $loop->first ? 'pt-3' : 'pt-2' }} pb-2">
                     <p class="text-muted fw-semibold fs-12 mb-2 text-uppercase letter-spacing-1">
                         <i class="ri-checkbox-blank-circle-fill text-primary me-1" style="font-size:8px;"></i>
-                        {{ $size->size_name }} Items <span class="badge bg-primary-subtle text-primary ms-1">{{ $size->volume_score }} points each</span>
+                        {{ $size->size_name }} Items
                     </p>
                     <div class="row g-2">
                         @foreach($size->items as $item)
                         <div class="col-md-4 col-6">
-                            <div class="item-card border rounded p-2 d-flex justify-content-between align-items-center" data-item-id="{{ $item->id }}" data-volume="{{ $size->volume_score }}">
-                                <span class="fs-12 fw-medium text-truncate me-2" title="{{ $item->item_name }}">{{ $item->item_name }}</span>
+                            <div class="item-card border rounded p-2 d-flex justify-content-between align-items-center" data-item-id="{{ $item->id }}" data-volume="{{ $item->score_point }}">
+                                <span class="fs-12 fw-medium text-truncate me-2" title="{{ $item->item_name }}">{{ $item->item_name }} <span class="badge bg-primary-subtle text-primary fs-11 ms-1">{{ $item->score_point }} pts</span></span>
                                 <div class="qty-control d-flex align-items-center gap-1">
                                     <button type="button" class="btn btn-sm btn-outline-secondary p-0 qty-btn" style="width:22px;height:22px;line-height:1;" data-action="minus" data-item="{{ $item->id }}">−</button>
                                     <span class="qty-display fs-12 fw-bold mx-1" style="min-width:18px;text-align:center;">0</span>
@@ -426,6 +421,10 @@
                     <div class="d-flex justify-content-between py-1 border-bottom">
                         <span class="fs-13 text-muted">Base Fare</span>
                         <span class="fs-13 fw-semibold" id="baseFareVal">₹0</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom" id="pointFareRow" style="display:none!important;">
+                        <span class="fs-13 text-muted">Point-Based Charge <span class="text-muted fs-11" id="pointFareExpl">(0 pts × ₹0)</span></span>
+                        <span class="fs-13 fw-semibold" id="pointFareVal">₹0</span>
                     </div>
                     <div class="d-flex justify-content-between py-1 border-bottom">
                         <span class="fs-13 text-muted">Distance</span>
@@ -699,8 +698,9 @@ $(document).ready(function () {
                     $('#categoryDetected').text('Survey Required');
                     $('#vehicleDetected').text('Physical survey needed');
                     $('#surveyAlert').removeClass('d-none');
-                    ['baseFareVal','distanceVal','addonVal','floorVal','weekendVal','monthEndVal','totalAmountVal']
+                    ['baseFareVal','pointFareVal','distanceVal','addonVal','floorVal','weekendVal','monthEndVal','totalAmountVal']
                         .forEach(id => $('#'+id).text('—'));
+                    $('#pointFareExpl').text('');
                     return;
                 }
 
@@ -709,6 +709,14 @@ $(document).ready(function () {
                 $('#vehicleDetected').text(data.vehicle_name || 'No vehicle assigned');
 
                 $('#baseFareVal').text(fmt(data.base_fare));
+                $('#pointFareVal').text(fmt(data.point_based_fare));
+                if (data.price_per_point > 0) {
+                    $('#pointFareExpl').text('(' + data.total_volume_score + ' pts × ₹' + parseFloat(data.price_per_point).toLocaleString('en-IN') + '/pt)');
+                    $('#pointFareRow').show();
+                } else {
+                    $('#pointFareExpl').text('(0 pts × ₹0)');
+                    $('#pointFareRow').hide();
+                }
                 $('#distanceVal').text(fmt(data.distance_charges));
                 $('#addonVal').text(fmt(data.addon_charges));
                 $('#floorVal').text(fmt(data.floor_charges));

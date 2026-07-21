@@ -16,7 +16,6 @@
                             <tr>
                                 <th>#</th>
                                 <th>Size Name</th>
-                                <th>Points (Volume Score)</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -35,7 +34,6 @@
             var table = initDataTable('#item-sizes-table', '{{ route('admin.item-sizes') }}', [
                 { data: 'DT_RowIndex', name: 'id', orderable: false, searchable: false },
                 { data: 'size_name', name: 'size_name' },
-                { data: 'volume_score', name: 'volume_score' },
                 { data: 'status', name: 'status' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]);

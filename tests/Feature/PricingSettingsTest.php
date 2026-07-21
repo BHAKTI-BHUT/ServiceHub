@@ -25,6 +25,7 @@ class PricingSettingsTest extends TestCase
         $item = Item::create([
             'item_name' => 'Wardrobe',
             'item_size_id' => $size->id,
+            'score_point' => 2,
             'status' => 'active',
         ]);
 
@@ -42,7 +43,9 @@ class PricingSettingsTest extends TestCase
             'items' => [['id' => $item->id, 'quantity' => 2]],
         ]);
 
-        $this->assertSame(2000.0, $quote['base_fare']);
+        $this->assertSame(1000.0, $quote['base_fare']);
+        $this->assertSame(1000.0, $quote['point_based_fare']);
+        $this->assertSame(2000.0, $quote['total_amount']);
     }
 
     public function test_admin_pricing_settings_are_persisted_and_used_by_the_pricing_engine(): void
@@ -62,7 +65,7 @@ class PricingSettingsTest extends TestCase
             'status' => 'active',
         ]);
 
-        $response = $this->post('/admin/pricing', [
+        $response = $this->post(route('admin.pricing.store'), [
             'weekend_enabled' => '1',
             'weekend_percent' => '12',
             'month_end_enabled' => '1',
@@ -76,6 +79,7 @@ class PricingSettingsTest extends TestCase
             'advance_amount' => '500',
         ]);
 
+        $response->dump();
         $response->assertRedirect(route('admin.pricing'));
 
         $this->assertDatabaseHas('pricing_settings', [

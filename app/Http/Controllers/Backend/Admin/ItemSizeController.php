@@ -42,13 +42,12 @@ class ItemSizeController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'size_name' => 'required|string|max:255',
-            'volume_score' => 'required|numeric|min:0.1',
             'status' => 'required|in:active,inactive',
         ]);
 
-        ItemSize::create($request->all());
+        ItemSize::create($data);
 
         return response()->json(['success' => true, 'message' => 'Item Size created successfully.']);
     }
@@ -60,13 +59,12 @@ class ItemSizeController extends Controller
 
     public function update(Request $request, ItemSize $itemSize)
     {
-        $request->validate([
+        $data = $request->validate([
             'size_name' => 'required|string|max:255',
-            'volume_score' => 'required|numeric|min:0.1',
             'status' => 'required|in:active,inactive',
         ]);
 
-        $itemSize->update($request->all());
+        $itemSize->update($data);
 
         return response()->json(['success' => true, 'message' => 'Item Size updated successfully.']);
     }

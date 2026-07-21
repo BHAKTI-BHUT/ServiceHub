@@ -69,9 +69,9 @@ class ItemSeeder extends Seeder
             ['item_name' => 'Piano / Organ',                'volume_score' => 5, 'size' => 'large',  'status' => 'active'],
         ];
 
-        $smallSize = DB::table('item_sizes')->where('size_name', 'Small')->first()->id;
-        $mediumSize = DB::table('item_sizes')->where('size_name', 'Medium')->first()->id;
-        $largeSize = DB::table('item_sizes')->where('size_name', 'Large')->first()->id;
+        $smallSize = DB::table('item_sizes')->where('size_name', 'LIKE', 'Small%')->first()?->id ?? 1;
+        $mediumSize = DB::table('item_sizes')->where('size_name', 'LIKE', 'Medium%')->first()?->id ?? 2;
+        $largeSize = DB::table('item_sizes')->where('size_name', 'LIKE', 'Large%')->first()?->id ?? 3;
 
         $data = [];
         foreach ($items as $item) {
@@ -82,6 +82,7 @@ class ItemSeeder extends Seeder
             $data[] = [
                 'item_name'    => $item['item_name'],
                 'item_size_id' => $sizeId,
+                'score_point'  => $item['volume_score'],
                 'status'       => $item['status'],
                 'created_at'   => now(),
                 'updated_at'   => now(),

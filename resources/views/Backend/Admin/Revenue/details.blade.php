@@ -392,6 +392,9 @@
                 @if($booking->base_fare)
                 <div class="info-row"><span class="info-label">Base Fare</span><span class="info-value">₹{{ number_format($booking->base_fare, 2) }}</span></div>
                 @endif
+                @if($booking->point_based_fare)
+                <div class="info-row"><span class="info-label">Point-Based Charges</span><span class="info-value">₹{{ number_format($booking->point_based_fare, 2) }}</span></div>
+                @endif
                 @if($booking->distance_charges)
                 <div class="info-row"><span class="info-label">Distance Charges</span><span class="info-value">₹{{ number_format($booking->distance_charges, 2) }}</span></div>
                 @endif

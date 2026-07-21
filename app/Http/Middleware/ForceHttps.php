@@ -20,10 +20,12 @@ class ForceHttps
      */
     public function handle(Request $request, Closure $next): Response
     {
-        URL::forceScheme('https');
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
 
-        if (config('app.url')) {
-            URL::forceRootUrl(config('app.url'));
+            if (config('app.url')) {
+                URL::forceRootUrl(config('app.url'));
+            }
         }
 
         return $next($request);

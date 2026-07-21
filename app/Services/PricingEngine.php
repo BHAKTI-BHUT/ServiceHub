@@ -45,6 +45,7 @@ class PricingEngine
             'vehicle_id'        => null,
             'vehicle_name'      => null,
             'base_fare'         => 0,
+            'point_based_fare'  => 0,
             'price_per_point'   => 0,
             'pricing_formula'   => 'Base fare only',
             'distance_charges'  => 0,
@@ -65,14 +66,15 @@ class PricingEngine
         if (isset($data['items']) && is_array($data['items'])) {
             foreach ($data['items'] as $itemData) {
                 $item = Item::with('size')->find($itemData['id']);
-                if ($item && $item->size) {
-                    $qty   = max(1, (int) ($itemData['quantity'] ?? 1));
-                    $score = $item->size->volume_score * $qty;
+                if ($item) {
+                    $qty       = max(1, (int) ($itemData['quantity'] ?? 1));
+                    $itemScore = (float) ($item->score_point ?? 0);
+                    $score     = $itemScore * $qty;
                     $breakdown['total_volume_score'] += $score;
                     $breakdown['items_breakdown'][] = [
                         'id'           => $item->id,
                         'name'         => $item->item_name,
-                        'volume_score' => $item->size->volume_score,
+                        'volume_score' => $itemScore,
                         'quantity'     => $qty,
                         'line_score'   => $score,
                     ];
@@ -109,11 +111,13 @@ class PricingEngine
             $breakdown['category_name'] = $category->category_name;
             $baseFare = (float) $category->base_fare;
             $pricePerPoint = (float) ($category->price_per_point ?? 0);
-            $breakdown['price_per_point'] = $pricePerPoint;
             $pointBasedFare = $pricePerPoint > 0 ? ($breakdown['total_volume_score'] * $pricePerPoint) : 0;
-            $breakdown['base_fare'] = $baseFare + $pointBasedFare;
-            $breakdown['pricing_formula'] = $pricePerPoint > 0
-                ? 'Base fare + (volume points × ₹' . number_format($pricePerPoint, 2) . ')'
+
+            $breakdown['base_fare']        = $baseFare;
+            $breakdown['price_per_point']  = $pricePerPoint;
+            $breakdown['point_based_fare'] = $pointBasedFare;
+            $breakdown['pricing_formula']  = $pricePerPoint > 0
+                ? 'Base fare (₹' . number_format($baseFare, 2) . ') + Volume points (' . $breakdown['total_volume_score'] . ' pts × ₹' . number_format($pricePerPoint, 2) . ' = ₹' . number_format($pointBasedFare, 2) . ')'
                 : 'Base fare only';
             $breakdown['category_weekend_surcharge_percent'] = (float) ($category->weekend_surcharge_percent ?? 0);
             $breakdown['category_month_end_surcharge_percent'] = (float) ($category->month_end_surcharge_percent ?? 0);
@@ -220,6 +224,7 @@ class PricingEngine
         // ── Step 8: Grand Total ───────────────────────────────────────────────
         $breakdown['total_amount'] = round(
             $breakdown['base_fare']
+            + $breakdown['point_based_fare']
             + $breakdown['distance_charges']
             + $breakdown['addon_charges']
             + $breakdown['floor_charges']

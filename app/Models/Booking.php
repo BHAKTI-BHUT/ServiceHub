@@ -35,6 +35,7 @@ class Booking extends Model
         'category_id',
         'vehicle_id',
         'base_fare',
+        'point_based_fare',
         'distance_charges',
         'addon_charges',
         'floor_charges',
