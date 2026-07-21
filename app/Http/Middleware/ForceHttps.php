@@ -24,7 +24,8 @@ class ForceHttps
             URL::forceScheme('https');
 
             if (config('app.url')) {
-                URL::forceRootUrl(config('app.url'));
+                $rootUrl = rtrim(preg_replace('/\/admin\/?$/i', '', config('app.url')), '/');
+                URL::forceRootUrl($rootUrl);
             }
         }
 

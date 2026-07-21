@@ -84,7 +84,7 @@
                 <div class="row g-3">
                     <div class="col-12">
                         <label for="customer_search" class="form-label fw-semibold">Customer <span class="text-danger">*</span></label>
-                        <select class="form-control" id="customer_search" name="customer_id" required>
+                        <select class="form-select select2" id="customer_search" name="customer_id" required>
                             <option value="">-- Select Customer --</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->mobile ?? 'No Mobile' }})</option>
@@ -122,13 +122,20 @@
             </div>
             <div class="card-body pt-0">
                 <div class="row g-3">
+                    {{-- Hidden Lat & Long inputs --}}
+                    <input type="hidden" id="pickup_latitude" name="pickup_latitude" value="23.0225">
+                    <input type="hidden" id="pickup_longitude" name="pickup_longitude" value="72.5714">
+                    <input type="hidden" id="drop_latitude" name="drop_latitude" value="23.0338">
+                    <input type="hidden" id="drop_longitude" name="drop_longitude" value="72.5850">
+
                     {{-- Pickup --}}
                     <div class="col-12">
                         <label class="form-label fw-semibold text-success"><i class="ri-map-pin-user-fill me-1"></i>Pickup Details</label>
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-8 position-relative">
                         <label for="pickup_location" class="form-label">Pickup Address <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="pickup_location" name="pickup_location" placeholder="Full pickup address" required>
+                        <input type="text" class="form-control" id="pickup_location" name="pickup_location" placeholder="Type city or address for suggestions..." autocomplete="off" required>
+                        <div id="pickup_suggestions" class="dropdown-menu shadow-lg w-100 mt-1 p-0" style="display:none; max-height:220px; overflow-y:auto; z-index:1050;"></div>
                     </div>
                     <div class="col-md-4">
                         <label for="pickup_contact_name" class="form-label">Contact Name</label>
@@ -138,14 +145,6 @@
                         <label for="pickup_contact_mobile" class="form-label">Contact Mobile</label>
                         <input type="text" class="form-control" id="pickup_contact_mobile" name="pickup_contact_mobile" placeholder="10-digit mobile">
                     </div>
-                    <div class="col-md-2">
-                        <label for="pickup_latitude" class="form-label">Latitude</label>
-                        <input type="number" step="any" class="form-control" id="pickup_latitude" name="pickup_latitude" placeholder="23.0225">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="pickup_longitude" class="form-label">Longitude</label>
-                        <input type="number" step="any" class="form-control" id="pickup_longitude" name="pickup_longitude" placeholder="72.5714">
-                    </div>
 
                     <div class="col-12"><hr class="my-1"></div>
 
@@ -153,9 +152,10 @@
                     <div class="col-12">
                         <label class="form-label fw-semibold text-danger"><i class="ri-map-pin-5-fill me-1"></i>Drop Details</label>
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-8 position-relative">
                         <label for="drop_location" class="form-label">Drop Address <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="drop_location" name="drop_location" placeholder="Full drop address" required>
+                        <input type="text" class="form-control" id="drop_location" name="drop_location" placeholder="Type city or address for suggestions..." autocomplete="off" required>
+                        <div id="drop_suggestions" class="dropdown-menu shadow-lg w-100 mt-1 p-0" style="display:none; max-height:220px; overflow-y:auto; z-index:1050;"></div>
                     </div>
                     <div class="col-md-4">
                         <label for="drop_contact_name" class="form-label">Contact Name</label>
@@ -165,13 +165,19 @@
                         <label for="drop_contact_mobile" class="form-label">Contact Mobile</label>
                         <input type="text" class="form-control" id="drop_contact_mobile" name="drop_contact_mobile" placeholder="10-digit mobile">
                     </div>
-                    <div class="col-md-2">
-                        <label for="drop_latitude" class="form-label">Latitude</label>
-                        <input type="number" step="any" class="form-control" id="drop_latitude" name="drop_latitude" placeholder="23.0338">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="drop_longitude" class="form-label">Longitude</label>
-                        <input type="number" step="any" class="form-control" id="drop_longitude" name="drop_longitude" placeholder="72.5850">
+
+                    <div class="col-12"><hr class="my-1"></div>
+
+                    {{-- Distance (KM) auto-calculated --}}
+                    <div class="col-md-6">
+                        <label for="total_distance" class="form-label fw-semibold text-primary">
+                            <i class="ri-map-pin-distance-line me-1"></i>Total Shifting Distance (KM) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" min="1" class="form-control fw-bold fs-15 text-primary" id="total_distance" name="total_distance" value="10" placeholder="Distance in KM" required>
+                            <span class="input-group-text bg-primary text-white font-monospace">KM</span>
+                        </div>
+                        <small class="text-muted fs-11 mt-1 d-block"><i class="ri-check-double-line text-success me-1"></i>Calculated automatically from pickup & drop details</small>
                     </div>
                 </div>
             </div>
@@ -202,7 +208,7 @@
                         @foreach($size->items as $item)
                         <div class="col-md-4 col-6">
                             <div class="item-card border rounded p-2 d-flex justify-content-between align-items-center" data-item-id="{{ $item->id }}" data-volume="{{ $item->score_point }}">
-                                <span class="fs-12 fw-medium text-truncate me-2" title="{{ $item->item_name }}">{{ $item->item_name }} <span class="badge bg-primary-subtle text-primary fs-11 ms-1">{{ $item->score_point }} pts</span></span>
+                                <span class="fs-12 fw-medium text-truncate me-2" title="{{ $item->item_name }}">{{ $item->item_name }} <span class="badge bg-primary-subtle text-primary fs-11 ms-1">{{ number_format($item->score_point, 2) }} pts</span></span>
                                 <div class="qty-control d-flex align-items-center gap-1">
                                     <button type="button" class="btn btn-sm btn-outline-secondary p-0 qty-btn" style="width:22px;height:22px;line-height:1;" data-action="minus" data-item="{{ $item->id }}">−</button>
                                     <span class="qty-display fs-12 fw-bold mx-1" style="min-width:18px;text-align:center;">0</span>
@@ -582,7 +588,7 @@ $(document).ready(function () {
         var total = 0;
         $('.item-card').each(function () {
             var id  = $(this).data('item-id');
-            var vol = parseInt($(this).data('volume')) || 0;
+            var vol = parseFloat($(this).data('volume')) || 0;
             var qty = itemQtys[id] || 0;
             total += vol * qty;
         });
@@ -594,8 +600,8 @@ $(document).ready(function () {
         var max   = 310;
         var pct   = Math.min(100, Math.round(score / max * 100));
 
-        $('#totalScoreDisplay').text(score);
-        $('#scoreLabel').text(score + ' / ' + max + ' pts');
+        $('#totalScoreDisplay').text(parseFloat(score).toFixed(2));
+        $('#scoreLabel').text(parseFloat(score).toFixed(2) + ' / ' + max + ' pts');
         $('#scoreBar').css('width', pct + '%');
 
         if (score > max) {
@@ -667,6 +673,7 @@ $(document).ready(function () {
         return {
             items:             items,
             addons:            addons,
+            total_distance:    parseFloat($('#total_distance').val()) || 10,
             pickup_latitude:   $('#pickup_latitude').val()  || null,
             pickup_longitude:  $('#pickup_longitude').val() || null,
             drop_latitude:     $('#drop_latitude').val()    || null,
@@ -677,6 +684,116 @@ $(document).ready(function () {
             _token:            '{{ csrf_token() }}'
         };
     }
+
+    // ── Location Autocomplete & Real-Time Driving KM Calculation ───────────────
+    function setupLocationAutocomplete(inputId, suggestionsId, latInputId, lonInputId) {
+        var timer = null;
+        var $input = $('#' + inputId);
+        var $suggestions = $('#' + suggestionsId);
+
+        $input.on('keyup input focus', function () {
+            clearTimeout(timer);
+            var query = $(this).val().trim();
+            if (query.length < 2) {
+                $suggestions.hide().empty();
+                return;
+            }
+
+            timer = setTimeout(function () {
+                var url = 'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&countrycodes=in&dedupe=1&q=' + encodeURIComponent(query);
+                $.getJSON(url, function (data) {
+                    $suggestions.empty();
+                    if (!data || data.length === 0) {
+                        $suggestions.hide();
+                        return;
+                    }
+                    $.each(data, function (i, item) {
+                        var fullName = item.display_name;
+                        var parts = fullName.split(',');
+                        var mainTitle = parts[0] ? parts[0].trim() : fullName;
+                        var subTitle = parts.slice(1).join(',').trim();
+                        var lat  = item.lat;
+                        var lon  = item.lon;
+
+                        var $item = $(
+                            '<a href="#" class="dropdown-item py-2 px-3 border-bottom d-flex align-items-center gap-2" style="white-space:normal;">' +
+                                '<div class="flex-shrink-0 bg-danger-subtle text-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width:32px;height:32px;">' +
+                                    '<i class="ri-map-pin-2-fill fs-14"></i>' +
+                                '</div>' +
+                                '<div class="flex-grow-1 overflow-hidden">' +
+                                    '<div class="fw-bold text-dark fs-13 text-truncate">' + mainTitle + '</div>' +
+                                    (subTitle ? '<div class="text-muted fs-11 text-truncate">' + subTitle + '</div>' : '') +
+                                '</div>' +
+                            '</a>'
+                        );
+
+                        $item.on('click', function (e) {
+                            e.preventDefault();
+                            $input.val(fullName);
+                            $('#' + latInputId).val(lat);
+                            $('#' + lonInputId).val(lon);
+                            $suggestions.hide().empty();
+                            calculateRealDistanceKM();
+                        });
+
+                        $suggestions.append($item);
+                    });
+                    $suggestions.show();
+                });
+            }, 250);
+        });
+
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#' + inputId + ', #' + suggestionsId).length) {
+                $suggestions.hide();
+            }
+        });
+    }
+
+    setupLocationAutocomplete('pickup_location', 'pickup_suggestions', 'pickup_latitude', 'pickup_longitude');
+    setupLocationAutocomplete('drop_location', 'drop_suggestions', 'drop_latitude', 'drop_longitude');
+
+    function calculateRealDistanceKM() {
+        var pLat = parseFloat($('#pickup_latitude').val());
+        var pLon = parseFloat($('#pickup_longitude').val());
+        var dLat = parseFloat($('#drop_latitude').val());
+        var dLon = parseFloat($('#drop_longitude').val());
+
+        if (pLat && pLon && dLat && dLon) {
+            var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + pLon + ',' + pLat + ';' + dLon + ',' + dLat + '?overview=false';
+            $.getJSON(osrmUrl, function(data) {
+                if (data && data.routes && data.routes[0]) {
+                    var km = (data.routes[0].distance / 1000).toFixed(1);
+                    $('#total_distance').val(km);
+                    $('#calcPriceBtn').trigger('click');
+                } else {
+                    fallbackHaversine(pLat, pLon, dLat, dLon);
+                }
+            }).fail(function() {
+                fallbackHaversine(pLat, pLon, dLat, dLon);
+            });
+        } else {
+            $('#calcPriceBtn').trigger('click');
+        }
+    }
+
+    function fallbackHaversine(lat1, lon1, lat2, lon2) {
+        var R = 6371;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c * 1.25;
+        var km = Math.max(2, parseFloat(d.toFixed(1)));
+        $('#total_distance').val(km);
+        $('#calcPriceBtn').trigger('click');
+    }
+
+    $('#total_distance').on('keyup input change', function () {
+        $('#calcPriceBtn').trigger('click');
+    });
 
     // ── Format currency ──────────────────────────────────────────────────
     function fmt(n) {
@@ -711,7 +828,7 @@ $(document).ready(function () {
                 $('#baseFareVal').text(fmt(data.base_fare));
                 $('#pointFareVal').text(fmt(data.point_based_fare));
                 if (data.price_per_point > 0) {
-                    $('#pointFareExpl').text('(' + data.total_volume_score + ' pts × ₹' + parseFloat(data.price_per_point).toLocaleString('en-IN') + '/pt)');
+                    $('#pointFareExpl').text('(' + parseFloat(data.total_volume_score).toFixed(2) + ' pts × ₹' + parseFloat(data.price_per_point).toLocaleString('en-IN') + '/pt)');
                     $('#pointFareRow').show();
                 } else {
                     $('#pointFareExpl').text('(0 pts × ₹0)');

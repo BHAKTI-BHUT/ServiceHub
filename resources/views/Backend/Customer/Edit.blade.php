@@ -50,16 +50,7 @@
                 <div class="invalid-feedback">Please select a status.</div>
             </div>
 
-            <div class="col-md-12">
-                <label for="cust_city" class="form-label">City</label>
-                <input type="text" class="form-control" id="cust_city" name="city"
-                    placeholder="City" value="{{ $customer->city }}">
-            </div>
 
-            <div class="col-md-12">
-                <label for="cust_address" class="form-label">Address</label>
-                <textarea class="form-control" id="cust_address" name="address" rows="2" placeholder="Address">{{ $customer->address }}</textarea>
-            </div>
             
             <div class="col-md-12">
                 <label for="cust_password" class="form-label">Password (Leave blank to keep current)</label>

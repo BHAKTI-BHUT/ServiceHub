@@ -75,10 +75,9 @@
         <!-- Header -->
         <div class="invoice-header">
             <div class="company-info">
-                <h1>ServiceHub</h1>
-                <p>Bhandari Packers & Movers<br>
-                   Professional Shifting Services<br>
-                   support@servicehub.in</p>
+                <h1>Bhandari Packers & Movers</h1>
+                <p>Professional Shifting Services<br>
+                   info@bhandaripackersandmovers.in</p>
             </div>
             <div class="invoice-title">
                 <h2>Invoice</h2>
@@ -167,9 +166,9 @@
 
         <!-- Footer -->
         <div class="invoice-footer">
-            <p class="thank-you">Thank you for choosing ServiceHub!</p>
+            <p class="thank-you">Thank you for choosing Bhandari Packers & Movers!</p>
             <p>This is a computer-generated invoice and does not require a physical signature.<br>
-               For queries, contact us at support@servicehub.in</p>
+               For queries, contact us at info@bhandaripackersandmovers.in</p>
         </div>
     </div>
 </body>

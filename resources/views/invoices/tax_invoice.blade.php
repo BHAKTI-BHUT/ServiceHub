@@ -96,9 +96,9 @@
         <div class="invoice-box">
             <!-- Company Header -->
             <div class="company-header">
-                <h1>ServiceHub Packers & Movers</h1>
+                <h1>Bhandari Packers & Movers</h1>
                 <p>Exclusive Packing, Moving & Logistics Solutions | 1- New Laxmi Soc. 150 Ft. Ring Road, Nr. Balaji Hall, Mavdi Plot, Rajkot.
-                GSTIN: 24GIZPS9434M1ZY | Ph: +91 95129 32626 | Email: billing@servicehub.in</p>
+                GSTIN: 24GIZPS9434M1ZY | Ph: +91 95129 32626 | Email: info@bhandaripackersandmovers.in</p>
             </div>
 
             <!-- Tax Invoice Label -->
@@ -245,7 +245,7 @@
                     <strong>Note:</strong> Shifting from {{ $booking->pickup_location }} to {{ $booking->drop_location }}
                 </div>
                 <div class="sign-block">
-                    <div class="sign-title">For, ServiceHub Packers & Movers</div>
+                    <div class="sign-title">For, Bhandari Packers & Movers</div>
                     <div class="sign-space"></div>
                     <div class="sign-bottom">(Authorised Signatory)</div>
                 </div>

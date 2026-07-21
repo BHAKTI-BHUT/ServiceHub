@@ -17,7 +17,6 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Mobile</th>
-                            <th>City</th>
                             <th>Status</th>
                             <th>Source</th>
                             <th>Action</th>
@@ -52,10 +51,6 @@
                 {
                     data: 'mobile',
                     name: 'mobile'
-                },
-                {
-                    data: 'city',
-                    name: 'city'
                 },
                 {
                     data: 'status',

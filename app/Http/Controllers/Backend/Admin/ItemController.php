@@ -21,7 +21,7 @@ class ItemController extends Controller
                     return $row->size ? $row->size->size_name : '-';
                 })
                 ->addColumn('score_point', function ($row) {
-                    return '<span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1">' . ($row->score_point ?? 0) . ' pts</span>';
+                    return '<span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1">' . number_format($row->score_point ?? 0, 2) . ' pts</span>';
                 })
                 ->addColumn('status_badge', fn($row) => $row->status == 'active'
                     ? '<span class="badge bg-success">Active</span>'
@@ -48,7 +48,7 @@ class ItemController extends Controller
         $data = $request->validate([
             'item_name'    => 'required|string|max:255',
             'item_size_id' => 'required|exists:item_sizes,id',
-            'score_point'  => 'required|integer|min:0',
+            'score_point'  => 'required|numeric|min:0',
             'status'       => 'required|boolean',
         ]);
         $item = Item::create($data);
@@ -74,7 +74,7 @@ class ItemController extends Controller
         $data = $request->validate([
             'item_name'    => 'required|string|max:255',
             'item_size_id' => 'required|exists:item_sizes,id',
-            'score_point'  => 'required|integer|min:0',
+            'score_point'  => 'required|numeric|min:0',
             'status'       => 'required|boolean',
         ]);
         $item->update($data);

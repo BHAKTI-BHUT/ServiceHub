@@ -16,6 +16,10 @@ class Item extends Model
         'status',
     ];
 
+    protected $casts = [
+        'score_point' => 'float',
+    ];
+
     public function getVolumeScoreAttribute()
     {
         return $this->score_point ?? 0;

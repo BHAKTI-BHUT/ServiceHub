@@ -26,7 +26,8 @@ class FileService
             File::makeDirectory($path, 0755, true);
         }
 
-        $filename = ($prefix ? $prefix . '_' : '') . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $ext = $file->getClientOriginalExtension() ?: ($file->extension() ?: 'jpg');
+        $filename = ($prefix ? $prefix . '_' : '') . time() . '_' . uniqid() . '.' . strtolower($ext);
         $file->move($path, $filename);
 
         return $directory . '/' . $filename;

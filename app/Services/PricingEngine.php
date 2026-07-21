@@ -134,16 +134,24 @@ class PricingEngine
             }
         }
 
-        // ── Step 4: Distance Charges (Haversine) ─────────────────────────────
-        $lat1 = $data['pickup_latitude']  ?? null;
-        $lon1 = $data['pickup_longitude'] ?? null;
-        $lat2 = $data['drop_latitude']    ?? null;
-        $lon2 = $data['drop_longitude']   ?? null;
+        // ── Step 4: Distance Charges ──────────────────────────────────────────
+        $distanceKm = 0;
+        if (isset($data['total_distance']) && (float)$data['total_distance'] > 0) {
+            $distanceKm = (float)$data['total_distance'];
+        } elseif (isset($data['distance_km']) && (float)$data['distance_km'] > 0) {
+            $distanceKm = (float)$data['distance_km'];
+        } else {
+            $lat1 = $data['pickup_latitude']  ?? null;
+            $lon1 = $data['pickup_longitude'] ?? null;
+            $lat2 = $data['drop_latitude']    ?? null;
+            $lon2 = $data['drop_longitude']   ?? null;
+            if ($lat1 && $lon1 && $lat2 && $lon2) {
+                $distanceKm = $this->haversineGreatCircleDistance($lat1, $lon1, $lat2, $lon2);
+            }
+        }
 
-        if ($lat1 && $lon1 && $lat2 && $lon2) {
-            $distanceKm = $this->haversineGreatCircleDistance($lat1, $lon1, $lat2, $lon2);
+        if ($distanceKm > 0) {
             $breakdown['total_distance_km'] = round($distanceKm, 2);
-
             $perKmRate    = $this->getSettingValue('per_km_rate', 20);
             $baseDistance = 5; // first 5 km covered in base fare
 

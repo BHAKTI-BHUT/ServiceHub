@@ -21,7 +21,7 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Score Point</label>
-            <input type="number" class="form-control" name="score_point" value="{{ old('score_point', $item->score_point ?? 0) }}" required min="0" placeholder="e.g. 10">
+            <input type="number" class="form-control" name="score_point" value="{{ old('score_point', $item->score_point ?? 0) }}" required min="0" step="0.01" placeholder="e.g. 2.5">
         </div>
         <div class="mb-3">
             <label class="form-label">Status</label>

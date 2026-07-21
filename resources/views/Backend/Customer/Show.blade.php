@@ -50,14 +50,6 @@
                                 <span class="fw-medium">{{ $customer->mobile ?? '—' }}</span>
                             </div>
                             <div>
-                                <span class="text-muted d-block">City</span>
-                                <span class="fw-medium">{{ $customer->city ?? '—' }}</span>
-                            </div>
-                            <div>
-                                <span class="text-muted d-block">Address</span>
-                                <span class="fw-medium">{{ $customer->address ?? '—' }}</span>
-                            </div>
-                            <div>
                                 <span class="text-muted d-block">Registered On</span>
                                 <span class="fw-medium">{{ $customer->created_at ? $customer->created_at->format('d M Y, h:i A') : '—' }}</span>
                             </div>

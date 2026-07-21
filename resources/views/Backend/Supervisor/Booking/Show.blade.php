@@ -63,7 +63,7 @@
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0"><i class="ri-box-3-fill text-warning me-2"></i>Shifting Items & Add-Ons</h5>
                 <div>
-                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill" id="volume-badge">Volume: {{ $booking->total_volume_score }} pts</span>
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill" id="volume-badge">Volume: {{ number_format($booking->total_volume_score, 2) }} pts</span>
                     @if($booking->category)
                         <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill ms-1">{{ $booking->category->category_name }}</span>
                     @endif
@@ -103,7 +103,7 @@
                                         <tr>
                                             <td class="ps-3 py-2 fw-medium text-dark fs-12">{{ $itm->item_name }}</td>
                                             <td class="py-2 text-center fs-12"><span class="badge bg-light text-dark border">{{ $itm->pivot->quantity }}</span></td>
-                                            <td class="pe-3 py-2 text-end text-muted fs-12">{{ $itm->pivot->calculated_volume_score }} pts</td>
+                                            <td class="pe-3 py-2 text-end text-muted fs-12">{{ number_format($itm->pivot->calculated_volume_score, 2) }} pts</td>
                                         </tr>
                                         @endforeach
                                     </tbody>

@@ -199,7 +199,7 @@
                         @endphp
                         <div class="col-md-4 col-6">
                             <div class="item-card border rounded p-2 d-flex justify-content-between align-items-center {{ $qty > 0 ? 'has-qty' : '' }}" data-item-id="{{ $item->id }}" data-volume="{{ $item->score_point }}">
-                                <span class="fs-12 fw-medium text-truncate me-2" title="{{ $item->item_name }}">{{ $item->item_name }} <span class="badge bg-primary-subtle text-primary fs-11 ms-1">{{ $item->score_point }} pts</span></span>
+                                <span class="fs-12 fw-medium text-truncate me-2" title="{{ $item->item_name }}">{{ $item->item_name }} <span class="badge bg-primary-subtle text-primary fs-11 ms-1">{{ number_format($item->score_point, 2) }} pts</span></span>
                                 <div class="qty-control d-flex align-items-center gap-1">
                                     <button type="button" class="btn btn-sm btn-outline-secondary p-0 qty-btn" style="width:22px;height:22px;line-height:1;" data-action="minus" data-item="{{ $item->id }}">−</button>
                                     <span class="qty-display fs-12 fw-bold mx-1" style="min-width:18px;text-align:center;">{{ $qty }}</span>
@@ -578,7 +578,7 @@ $(document).ready(function () {
         var total = 0;
         $('.item-card').each(function () {
             var id  = $(this).data('item-id');
-            var vol = parseInt($(this).data('volume')) || 0;
+            var vol = parseFloat($(this).data('volume')) || 0;
             var qty = itemQtys[id] || 0;
             total += vol * qty;
         });
@@ -590,8 +590,8 @@ $(document).ready(function () {
         var max   = 310;
         var pct   = Math.min(100, Math.round(score / max * 100));
 
-        $('#totalScoreDisplay').text(score);
-        $('#scoreLabel').text(score + ' / ' + max + ' pts');
+        $('#totalScoreDisplay').text(parseFloat(score).toFixed(2));
+        $('#scoreLabel').text(parseFloat(score).toFixed(2) + ' / ' + max + ' pts');
         $('#scoreBar').css('width', pct + '%');
 
         if (score > max) {
@@ -712,7 +712,7 @@ $(document).ready(function () {
                 $('#baseFareVal').text(fmt(data.base_fare));
                 $('#pointFareVal').text(fmt(data.point_based_fare));
                 if (data.price_per_point > 0) {
-                    $('#pointFareExpl').text('(' + data.total_volume_score + ' pts × ₹' + parseFloat(data.price_per_point).toLocaleString('en-IN') + '/pt)');
+                    $('#pointFareExpl').text('(' + parseFloat(data.total_volume_score).toFixed(2) + ' pts × ₹' + parseFloat(data.price_per_point).toLocaleString('en-IN') + '/pt)');
                     $('#pointFareRow').show();
                 } else {
                     $('#pointFareExpl').text('(0 pts × ₹0)');
