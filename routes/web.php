@@ -17,7 +17,11 @@ use App\Http\Controllers\Backend\SystemSettingController;
 */
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+});
+
+Route::get('/admin', function () {
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 Route::middleware(['auth'])->group(function () {
