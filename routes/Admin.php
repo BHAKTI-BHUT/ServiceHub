@@ -41,10 +41,14 @@ Route::middleware(['auth'])->group(function () {
 
     $adminPrefix = (request()->getBaseUrl() === '/admin') ? '' : 'admin';
 
-    Route::prefix($adminPrefix)->name('admin.')->group(function () {
+    Route::prefix($adminPrefix)->name('admin.')->group(function () use ($adminPrefix) {
 
         // Dashboard
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        if ($adminPrefix === '') {
+            Route::get('/dashboard-admin', [DashboardController::class, 'index'])->name('dashboard');
+        } else {
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        }
 
         // Booking Overview (used in dashboard stats only — not sidebar)
         Route::get('/bookings/total',     [BookingController::class, 'total'])->name('bookings.total');
