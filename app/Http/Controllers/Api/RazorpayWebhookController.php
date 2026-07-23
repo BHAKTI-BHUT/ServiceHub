@@ -57,6 +57,7 @@ class RazorpayWebhookController extends Controller
                             'tracking_status'             => 'confirmed',
                             'registration_payment_status' => 'paid',
                             'registration_payment_id'     => $paymentId,
+                            'remaining_amount'            => $booking->amount - $booking->registration_charge,
                         ]);
 
                         OrderTracking::create([

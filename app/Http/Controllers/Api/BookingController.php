@@ -626,6 +626,7 @@ class BookingController extends Controller
                 'tracking_status'             => 'confirmed',
                 'registration_payment_status' => 'paid',
                 'registration_payment_id'     => $validated['razorpay_payment_id'],
+                'remaining_amount'            => $booking->amount - $booking->registration_charge,
             ]);
 
             \App\Models\OrderTracking::create([

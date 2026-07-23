@@ -162,6 +162,7 @@
                         $cgst = round($total_gst / 2, 2);
                         $sgst = $total_gst - $cgst;
                         
+                        $defaultRegFee = \App\Models\PricingSetting::where('key', 'registration_fee')->value('value') ?? 500;
                         $sr = 1;
                     @endphp
                     <tr>
@@ -230,10 +231,16 @@
                         <div class="footer-right-label">Grand Total</div>
                         <div class="footer-right-value">₹{{ number_format($total_amount, 2) }}</div>
                     </div>
+                    <div class="footer-right-row">
+                        <div class="footer-right-label">Advance Paid</div>
+                        <div class="footer-right-value">
+                            ₹{{ number_format($booking->registration_payment_status === 'paid' ? ($booking->registration_charge ?? $defaultRegFee) : 0, 2) }}
+                        </div>
+                    </div>
                     <div class="footer-right-row highlight" style="color: red;">
                         <div class="footer-right-label" style="color: red;">Due Balance</div>
                         <div class="footer-right-value" style="color: red;">
-                            ₹{{ $booking->remaining_payment_status === 'paid' ? '0.00' : number_format($booking->remaining_amount, 2) }}
+                            ₹{{ $booking->remaining_payment_status === 'paid' ? '0.00' : number_format($total_amount - ($booking->registration_payment_status === 'paid' ? ($booking->registration_charge ?? $defaultRegFee) : 0), 2) }}
                         </div>
                     </div>
                 </div>

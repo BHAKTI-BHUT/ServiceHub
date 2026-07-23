@@ -237,6 +237,11 @@ class BookingController extends Controller
         $vendorCommissionAmount = round($grandTotal * ($vendorCommissionPct / 100), 2);
         $advanceAmount          = 0.00;
 
+        $regFeeSetting = PricingSetting::where('key', 'registration_fee')->first();
+        $registrationCharge = (float) ($regFeeSetting->value ?? 500);
+        $registrationPaymentStatus = ($request->status === 'pending') ? 'pending' : 'paid';
+        $remainingAmount = ($registrationPaymentStatus === 'paid') ? ($grandTotal - $registrationCharge) : $grandTotal;
+
         DB::beginTransaction();
         try {
             $booking = Booking::create([
@@ -277,9 +282,11 @@ class BookingController extends Controller
 
                 // Payment breakdown
                 'advance_amount'           => 0.00,
-                'remaining_amount'         => $grandTotal,
+                'remaining_amount'         => $remainingAmount,
                 'advance_payment_status'   => 'paid',
                 'remaining_payment_status' => 'pending',
+                'registration_charge'      => $registrationCharge,
+                'registration_payment_status' => $registrationPaymentStatus,
 
                 // Vendor settlement
                 'vendor_commission_amount' => $vendorCommissionAmount,
@@ -444,6 +451,13 @@ class BookingController extends Controller
         $advanceAmount          = 0.00;
         $vendorCommissionAmount = round($grandTotal * 0.15, 2);
 
+        $regFeeSetting = PricingSetting::where('key', 'registration_fee')->first();
+        $registrationCharge = $booking->registration_charge ?? (float) ($regFeeSetting->value ?? 500);
+        $registrationPaymentStatus = $booking->registration_payment_status === 'paid' 
+            ? 'paid' 
+            : (($request->status === 'pending') ? 'pending' : 'paid');
+        $remainingAmount = ($registrationPaymentStatus === 'paid') ? ($grandTotal - $registrationCharge) : $grandTotal;
+
         DB::beginTransaction();
         try {
             $booking->update([
@@ -480,7 +494,9 @@ class BookingController extends Controller
                 'labour_charge'            => $labourCharge,
                 'amount'                   => $grandTotal,
                 'advance_amount'           => 0.00,
-                'remaining_amount'         => $grandTotal,
+                'remaining_amount'         => $remainingAmount,
+                'registration_charge'      => $registrationCharge,
+                'registration_payment_status' => $registrationPaymentStatus,
                 'vendor_commission_amount' => $vendorCommissionAmount,
                 'vendor_settlement_amount' => $grandTotal - $vendorCommissionAmount,
             ]);

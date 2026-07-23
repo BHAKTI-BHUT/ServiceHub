@@ -325,6 +325,7 @@
                 <div class="card-header py-2 d-flex justify-content-between align-items-center">
                     <h6 class="card-title mb-0 fs-13"><i class="ri-secure-payment-line me-1 text-primary"></i>Registration Payment</h6>
                     @php
+                        $defaultRegFee = \App\Models\PricingSetting::where('key', 'registration_fee')->value('value') ?? 500;
                         $regBadge = match($booking->registration_payment_status) {
                             'paid' => 'bg-success-focus text-success',
                             'failed' => 'bg-danger-focus text-danger',
@@ -336,7 +337,7 @@
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between py-1 border-bottom">
                         <span class="fs-12 text-muted">Registration Charge</span>
-                        <span class="fs-12 fw-semibold">₹{{ number_format($booking->registration_charge, 2) }}</span>
+                        <span class="fs-12 fw-semibold">₹{{ number_format($booking->registration_charge ?? $defaultRegFee, 2) }}</span>
                     </div>
                     @if($booking->registration_order_id)
                     <div class="d-flex justify-content-between py-1 border-bottom">
@@ -353,7 +354,7 @@
                     @if($booking->registration_payment_status === 'paid')
                     <div class="mt-3">
                         <a href="{{ route('booking.registration-invoice', $booking->id) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
-                            <i class="ri-file-download-line me-1"></i>Download Registration Invoice
+                             <i class="ri-file-download-line me-1"></i>Download Registration Invoice
                         </a>
                     </div>
                     @endif
@@ -387,7 +388,14 @@
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between py-1 border-bottom">
                         <span class="fs-12 text-muted">Remaining Balance</span>
-                        <span class="fs-12 fw-semibold">₹{{ number_format($booking->remaining_amount, 2) }}</span>
+                        @php
+                            $displayRemaining = $booking->remaining_payment_status === 'paid'
+                                ? 0.00
+                                : ($booking->registration_payment_status === 'paid' 
+                                    ? ($booking->amount - ($booking->registration_charge ?? $defaultRegFee))
+                                    : $booking->amount);
+                        @endphp
+                        <span class="fs-12 fw-semibold">₹{{ number_format($displayRemaining, 2) }}</span>
                     </div>
                     @if($booking->payment_method)
                     <div class="d-flex justify-content-between py-1 border-bottom">

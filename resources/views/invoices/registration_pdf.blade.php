@@ -1,3 +1,6 @@
+@php
+    $defaultRegFee = \App\Models\PricingSetting::where('key', 'registration_fee')->value('value') ?? 500;
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -124,7 +127,7 @@
                         <strong>Compulsory Registration & Booking Fee</strong><br>
                         <span style="font-size: 11px; color: #999;">One-time non-refundable registration charge for booking confirmation</span>
                     </td>
-                    <td>₹{{ number_format($booking->registration_charge, 2) }}</td>
+                    <td>₹{{ number_format($booking->registration_charge ?? $defaultRegFee, 2) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -134,11 +137,11 @@
             <div class="totals-table">
                 <div class="row">
                     <span class="label">Subtotal</span>
-                    <span class="value">₹{{ number_format($booking->registration_charge, 2) }}</span>
+                    <span class="value">₹{{ number_format($booking->registration_charge ?? $defaultRegFee, 2) }}</span>
                 </div>
                 <div class="row total">
                     <span>Total Paid</span>
-                    <span>₹{{ number_format($booking->registration_charge, 2) }}</span>
+                    <span>₹{{ number_format($booking->registration_charge ?? $defaultRegFee, 2) }}</span>
                 </div>
             </div>
         </div>

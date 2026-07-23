@@ -23,7 +23,11 @@ class RevenueController extends Controller
                     return '<span class="badge bg-danger">Unpaid</span>';
                 })
                 ->editColumn('amount', fn($row) => '₹' . number_format($row->amount, 2))
-                ->editColumn('registration_charge', fn($row) => '₹' . number_format($row->registration_charge, 2) . ' (' . ucfirst($row->registration_payment_status) . ')')
+                ->editColumn('registration_charge', function($row) {
+                    $defaultRegFee = \App\Models\PricingSetting::where('key', 'registration_fee')->value('value') ?? 500;
+                    $fee = $row->registration_charge ?? $defaultRegFee;
+                    return '₹' . number_format($fee, 2) . ' (' . ucfirst($row->registration_payment_status) . ')';
+                })
                 ->editColumn('remaining_amount', function($row) {
                     if ($row->remaining_payment_status === 'paid') {
                         return '₹0.00';
@@ -44,10 +48,22 @@ class RevenueController extends Controller
         }
 
         // Summary Statistics (for cards)
-        $registrationCollected = Booking::where('registration_payment_status', 'paid')->sum('registration_charge');
-        $remainingCollected = Booking::where('remaining_payment_status', 'paid')->sum('remaining_amount');
+        $defaultRegFee = \App\Models\PricingSetting::where('key', 'registration_fee')->value('value') ?? 500;
+
+        $registrationCollected = Booking::where('registration_payment_status', 'paid')
+            ->get()
+            ->sum(fn($b) => $b->registration_charge ?? $defaultRegFee);
+
+        $remainingCollected = Booking::where('remaining_payment_status', 'paid')
+            ->get()
+            ->sum(fn($b) => $b->amount - ($b->registration_charge ?? $defaultRegFee));
+
         $totalRevenue = $remainingCollected + $registrationCollected;
-        $pendingRevenue = Booking::where('remaining_payment_status', 'pending')->where('status', '!=', 'cancelled')->sum('remaining_amount');
+
+        $pendingRevenue = Booking::where('remaining_payment_status', 'pending')
+            ->where('status', '!=', 'cancelled')
+            ->get()
+            ->sum(fn($b) => $b->amount - ($b->registration_charge ?? $defaultRegFee));
 
         return view('Backend.Admin.Revenue.Index', compact(
             'totalRevenue', 'registrationCollected', 'remainingCollected', 'pendingRevenue'
