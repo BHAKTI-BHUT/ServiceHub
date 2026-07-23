@@ -194,27 +194,73 @@ Route::get('/run-artisan-storage-link', function () {
     $target = storage_path('app/public');
     $shortcut = public_path('storage');
 
-    if (file_exists($shortcut)) {
-        return "<h2>✅ Storage link already exists!</h2><p>Shortcut Path: {$shortcut}</p>";
+    // If it's already a symlink or directory with files, consider it done
+    if (is_link($shortcut)) {
+        return "<div style='font-family:sans-serif;padding:20px;'><h2 style='color:#4CAF50;'>✅ Storage symlink already exists!</h2><p>Path: {$shortcut}</p></div>";
     }
 
+    // Method 1: Try symlink (works on VPS/dedicated servers)
     try {
-        // Try direct PHP symlink first (avoids exec() calls)
-        if (symlink($target, $shortcut)) {
-            return "<h2>✅ Storage Link Created Successfully via PHP symlink()!</h2>";
+        if (function_exists('symlink') && @symlink($target, $shortcut)) {
+            return "<div style='font-family:sans-serif;padding:20px;'><h2 style='color:#4CAF50;'>✅ Storage Link Created via symlink()!</h2></div>";
         }
-        throw new \Exception("PHP symlink() returned false.");
     } catch (\Throwable $e) {
-        try {
-            // Fallback to Artisan (might fail if exec is disabled, but worth a try)
-            \Illuminate\Support\Facades\Artisan::call('storage:link');
-            $output = \Illuminate\Support\Facades\Artisan::output();
-            return "<h2>✅ Storage Link Created via Artisan!</h2><pre>{$output}</pre>";
-        } catch (\Throwable $ex) {
-            return "<h2>❌ Error Creating Storage Link:</h2>"
-                 . "<p><strong>Direct PHP symlink() failed:</strong> " . $e->getMessage() . "</p>"
-                 . "<p><strong>Artisan storage:link failed:</strong> " . $ex->getMessage() . "</p>";
+        // symlink disabled, continue to fallback
+    }
+
+    // Method 2: Copy files from storage/app/public to public/storage
+    try {
+        if (!is_dir($target)) {
+            @mkdir($target, 0755, true);
         }
+
+        if (is_dir($shortcut)) {
+            // Already exists as a directory, just sync files
+        } else {
+            @mkdir($shortcut, 0755, true);
+        }
+
+        // Recursively copy all files and folders
+        $copied = 0;
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($target, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $destPath = $shortcut . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+            if ($item->isDir()) {
+                if (!is_dir($destPath)) {
+                    @mkdir($destPath, 0755, true);
+                }
+            } else {
+                @copy($item->getPathname(), $destPath);
+                $copied++;
+            }
+        }
+
+        // Create a marker file so we know this is a copy-based link
+        file_put_contents($shortcut . '/.storage_copy_link', json_encode([
+            'created_at' => date('Y-m-d H:i:s'),
+            'source' => $target,
+            'method' => 'file_copy'
+        ]));
+
+        return "<div style='font-family:sans-serif;padding:20px;'>"
+             . "<h2 style='color:#4CAF50;'>✅ Storage Link Created via File Copy!</h2>"
+             . "<p><strong>Source:</strong> {$target}</p>"
+             . "<p><strong>Destination:</strong> {$shortcut}</p>"
+             . "<p><strong>Files Copied:</strong> {$copied}</p>"
+             . "<p style='color:#ff9800;'><strong>⚠️ Note:</strong> Since symlink() is disabled on this server, files were copied instead. "
+             . "If you upload new files to storage, visit this URL again to sync them.</p>"
+             . "</div>";
+
+    } catch (\Throwable $e) {
+        return "<div style='font-family:sans-serif;padding:20px;'>"
+             . "<h2 style='color:#f44336;'>❌ Error Creating Storage Link:</h2>"
+             . "<p>" . $e->getMessage() . "</p>"
+             . "<p><strong>File:</strong> " . $e->getFile() . ":" . $e->getLine() . "</p>"
+             . "</div>";
     }
 });
 

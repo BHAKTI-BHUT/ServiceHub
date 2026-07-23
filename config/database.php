@@ -113,6 +113,24 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        // Website (CodeIgniter) Database Connection
+        // Used for cross-database operations like syncing reviews/feedback
+        'website' => [
+            'driver' => 'mysql',
+            'host' => env('WEBSITE_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('WEBSITE_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('WEBSITE_DB_DATABASE', 'service_hub_web'),
+            'username' => env('WEBSITE_DB_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('WEBSITE_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
+        ],
+
     ],
 
     /*
